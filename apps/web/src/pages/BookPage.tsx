@@ -1,0 +1,115 @@
+import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router';
+import { BookForm, toFormValues } from '../components/BookForm.tsx';
+import { ApiRequestError } from '../lib/api.ts';
+import { useBook, useDeleteBook, useUpdateBook } from '../lib/books.ts';
+import { formatDateRange, formatTripLength } from '../lib/dates.ts';
+import { NotFoundPage } from './NotFoundPage.tsx';
+
+export function BookPage() {
+  const { bookId = '' } = useParams();
+  const book = useBook(bookId);
+  const updateBook = useUpdateBook(bookId);
+  const deleteBook = useDeleteBook(bookId);
+  const navigate = useNavigate();
+  const [editing, setEditing] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+
+  if (book.isPending) return <p className="muted">Loading…</p>;
+  if (book.isError) {
+    if (book.error instanceof ApiRequestError && book.error.status === 404) return <NotFoundPage />;
+    return <p role="alert">Could not load this book. Try reloading the page.</p>;
+  }
+
+  const b = book.data;
+
+  if (editing) {
+    return (
+      <section className="card narrow">
+        <h1>Edit trip details</h1>
+        <BookForm
+          initial={toFormValues(b)}
+          submitLabel="Save changes"
+          pendingLabel="Saving…"
+          onSubmit={async (body) => {
+            await updateBook.mutateAsync(body);
+            setEditing(false);
+          }}
+          onCancel={() => setEditing(false)}
+        />
+      </section>
+    );
+  }
+
+  return (
+    <section className="stack">
+      <div className="page-title">
+        <div>
+          <h1>{b.title}</h1>
+          <p>
+            {formatDateRange(b.startDate, b.endDate)}
+            <span className="muted"> · {formatTripLength(b.startDate, b.endDate)}</span>
+          </p>
+        </div>
+        <button type="button" className="button ghost" onClick={() => setEditing(true)}>
+          Edit details
+        </button>
+      </div>
+
+      <dl className="card details">
+        <div>
+          <dt>Destinations</dt>
+          <dd>{b.destinations.length > 0 ? b.destinations.join(' · ') : '—'}</dd>
+        </div>
+        <div>
+          <dt>Time zone</dt>
+          <dd>{b.defaultTz}</dd>
+        </div>
+        {b.description && (
+          <div>
+            <dt>Description</dt>
+            <dd>{b.description}</dd>
+          </div>
+        )}
+      </dl>
+
+      <div className="danger-zone">
+        {confirmingDelete ? (
+          <div role="alertdialog" aria-label="Confirm delete" className="actions">
+            <span>Delete “{b.title}” and everything in it? This cannot be undone.</span>
+            <button
+              type="button"
+              className="button danger"
+              disabled={deleteBook.isPending}
+              onClick={() =>
+                deleteBook.mutate(undefined, { onSuccess: () => navigate('/', { replace: true }) })
+              }
+            >
+              {deleteBook.isPending ? 'Deleting…' : 'Delete book'}
+            </button>
+            <button
+              type="button"
+              className="button ghost"
+              onClick={() => setConfirmingDelete(false)}
+            >
+              Keep it
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="button ghost danger-text"
+            onClick={() => setConfirmingDelete(true)}
+          >
+            Delete book…
+          </button>
+        )}
+        {deleteBook.isError && (
+          <p role="alert" className="form-error">
+            Could not delete the book. Try again.
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}

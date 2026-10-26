@@ -1,42 +1,44 @@
-import { useQuery } from '@tanstack/react-query';
-import { Link, Route, Routes } from 'react-router';
-import { getHealth } from './lib/api.ts';
-
-function ApiStatus() {
-  const health = useQuery({ queryKey: ['health'], queryFn: getHealth, retry: false });
-
-  if (health.isPending) return <p role="status">Checking the server…</p>;
-  if (health.isError) return <p role="status">Server unreachable</p>;
-  return (
-    <p role="status">
-      {health.data.db === 'up' ? 'Server connected' : 'Server up, database unavailable'}
-    </p>
-  );
-}
-
-function HomePage() {
-  return (
-    <main>
-      <h1>Digital Travel Book</h1>
-      <ApiStatus />
-    </main>
-  );
-}
-
-function NotFoundPage() {
-  return (
-    <main>
-      <h1>Page not found</h1>
-      <Link to="/">Back to home</Link>
-    </main>
-  );
-}
+import { Route, Routes } from 'react-router';
+import { Layout } from './components/Layout.tsx';
+import { RequireAuth } from './components/RequireAuth.tsx';
+import { AuthPage } from './pages/AuthPage.tsx';
+import { BookPage } from './pages/BookPage.tsx';
+import { LibraryPage } from './pages/LibraryPage.tsx';
+import { NewBookPage } from './pages/NewBookPage.tsx';
+import { NotFoundPage } from './pages/NotFoundPage.tsx';
 
 export function App() {
   return (
     <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="*" element={<NotFoundPage />} />
+      <Route element={<Layout />}>
+        <Route path="/login" element={<AuthPage mode="login" />} />
+        <Route path="/register" element={<AuthPage mode="register" />} />
+        <Route
+          path="/"
+          element={
+            <RequireAuth>
+              <LibraryPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/books/new"
+          element={
+            <RequireAuth>
+              <NewBookPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/books/:bookId"
+          element={
+            <RequireAuth>
+              <BookPage />
+            </RequireAuth>
+          }
+        />
+        <Route path="*" element={<NotFoundPage />} />
+      </Route>
     </Routes>
   );
 }

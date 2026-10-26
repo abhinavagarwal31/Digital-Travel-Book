@@ -3,8 +3,19 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
 import { App } from './App.tsx';
+import { ApiRequestError } from './lib/api.ts';
+import './styles.css';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // A 4xx (not found, logged out, invalid) will not change on retry; only
+      // network failures and 5xx get two more tries.
+      retry: (failures, err) =>
+        !(err instanceof ApiRequestError && err.status < 500) && failures < 2,
+    },
+  },
+});
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing #root element in index.html');
