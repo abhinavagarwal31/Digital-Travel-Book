@@ -9,8 +9,11 @@ export function NewBookPage() {
 
   return (
     <section className="card narrow">
-      <h1>New travel book</h1>
-      <p className="muted">One book per trip. You can change any of this later.</p>
+      <div className="stack" style={{ gap: '0.4rem' }}>
+        <p className="eyebrow">New book</p>
+        <h1>New travel book</h1>
+        <p className="muted">One book per trip. You can change any of this later.</p>
+      </div>
       <BookForm
         initial={{
           title: '',

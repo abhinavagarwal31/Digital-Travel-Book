@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router';
+import { BookCover } from '../components/BookCover.tsx';
 import { BookForm, toFormValues } from '../components/BookForm.tsx';
 import { ApiRequestError } from '../lib/api.ts';
 import { useBook, useDeleteBook, useUpdateBook } from '../lib/books.ts';
@@ -42,18 +43,25 @@ export function BookPage() {
   }
 
   return (
-    <section className="stack">
-      <div className="page-title">
-        <div>
+    <section className="stack" style={{ gap: '2rem' }}>
+      <Link to="/" className="muted">
+        ← All books
+      </Link>
+
+      <div className="book-hero">
+        <BookCover book={b} />
+        <div className="stack" style={{ gap: '0.9rem' }}>
+          <p className="eyebrow">Travel book</p>
           <h1>{b.title}</h1>
-          <p>
-            {formatDateRange(b.startDate, b.endDate)}
-            <span className="muted"> · {formatTripLength(b.startDate, b.endDate)}</span>
+          <p className="muted">
+            {formatDateRange(b.startDate, b.endDate)} · {formatTripLength(b.startDate, b.endDate)}
           </p>
+          <div className="actions">
+            <button type="button" className="button ghost" onClick={() => setEditing(true)}>
+              Edit details
+            </button>
+          </div>
         </div>
-        <button type="button" className="button ghost" onClick={() => setEditing(true)}>
-          Edit details
-        </button>
       </div>
 
       <dl className="card details">
@@ -66,8 +74,8 @@ export function BookPage() {
           <dd>{b.defaultTz}</dd>
         </div>
         {b.description && (
-          <div>
-            <dt>Description</dt>
+          <div style={{ gridColumn: '1 / -1' }}>
+            <dt>About this trip</dt>
             <dd>{b.description}</dd>
           </div>
         )}

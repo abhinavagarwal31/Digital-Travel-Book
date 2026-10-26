@@ -12,9 +12,15 @@ function type(label: RegExp | string, value: string) {
 }
 
 describe('logged out', () => {
-  it('sends a visitor to the login page', async () => {
+  it('shows a visitor the landing page', async () => {
     mockApi({ 'GET /auth/me': UNAUTHENTICATED });
     renderApp('/');
+    expect(await screen.findByRole('link', { name: 'Start your first book' })).toBeTruthy();
+  });
+
+  it('sends a visitor to the login page from a private page', async () => {
+    mockApi({ 'GET /auth/me': UNAUTHENTICATED });
+    renderApp('/books/new');
     expect(await screen.findByRole('heading', { name: 'Log in' })).toBeTruthy();
   });
 
@@ -42,14 +48,14 @@ describe('logged out', () => {
       'POST /auth/login': { status: 200, body: { user: ASHA } },
       'GET /books': { status: 200, body: { books: [JAPAN_BOOK] } },
     });
-    renderApp('/');
+    renderApp('/login');
     await screen.findByRole('heading', { name: 'Log in' });
     type('Email', '  Asha@Example.com ');
     type('Password', 'correct horse battery');
     fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
 
     expect(await screen.findByRole('heading', { name: 'My travel books' })).toBeTruthy();
-    expect(await screen.findByText('Whispers of Japan')).toBeTruthy();
+    expect(await screen.findByRole('link', { name: 'Whispers of Japan' })).toBeTruthy();
     expect(calls.find((c) => c.path === '/auth/login')?.body).toEqual({
       email: 'asha@example.com',
       password: 'correct horse battery',
@@ -138,7 +144,9 @@ describe('creating a book', () => {
     fillTrip('2026-10-15');
     fireEvent.click(screen.getByRole('button', { name: 'Create book' }));
 
-    expect(await screen.findByRole('heading', { name: 'Whispers of Japan' })).toBeTruthy();
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Whispers of Japan' }),
+    ).toBeTruthy();
     expect(calls.find((c) => c.method === 'POST')?.body).toEqual({
       title: 'Whispers of Japan',
       startDate: '2026-10-10',
@@ -171,7 +179,7 @@ describe('a book page', () => {
     type('Title', 'Kyoto & beyond');
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
 
-    expect(await screen.findByRole('heading', { name: 'Kyoto & beyond' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Kyoto & beyond' })).toBeTruthy();
     expect(calls.find((c) => c.method === 'PATCH')?.body).toMatchObject({
       title: 'Kyoto & beyond',
     });

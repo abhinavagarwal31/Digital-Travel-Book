@@ -60,69 +60,78 @@ export function AuthPage({ mode }: { mode: Mode }) {
   }
 
   return (
-    <section className="card narrow">
-      <h1>{isRegister ? 'Create your account' : 'Log in'}</h1>
-      <form className="stack" onSubmit={handleSubmit} noValidate>
-        {isRegister && (
-          <Field label="Name" error={errors.name}>
+    <div className="auth-shell">
+      <section className="card auth-card stack">
+        <div className="stack" style={{ gap: '0.4rem' }}>
+          <h1>{isRegister ? 'Create your account' : 'Log in'}</h1>
+          <p className="muted">
+            {isRegister
+              ? 'Your books stay private to you.'
+              : 'Welcome back. Your books are waiting.'}
+          </p>
+        </div>
+        <form className="stack" onSubmit={handleSubmit} noValidate>
+          {isRegister && (
+            <Field label="Name" error={errors.name}>
+              {(p) => (
+                <input
+                  {...p}
+                  autoComplete="name"
+                  value={name}
+                  onChange={(e) => edit('name', setName)(e.target.value)}
+                />
+              )}
+            </Field>
+          )}
+          <Field label="Email" error={errors.email}>
             {(p) => (
               <input
                 {...p}
-                autoComplete="name"
-                value={name}
-                onChange={(e) => edit('name', setName)(e.target.value)}
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => edit('email', setEmail)(e.target.value)}
               />
             )}
           </Field>
-        )}
-        <Field label="Email" error={errors.email}>
-          {(p) => (
-            <input
-              {...p}
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => edit('email', setEmail)(e.target.value)}
-            />
-          )}
-        </Field>
-        <Field
-          label="Password"
-          error={errors.password}
-          {...(isRegister ? { hint: 'At least 8 characters.' } : {})}
-        >
-          {(p) => (
-            <input
-              {...p}
-              type="password"
-              autoComplete={isRegister ? 'new-password' : 'current-password'}
-              value={password}
-              onChange={(e) => edit('password', setPassword)(e.target.value)}
-            />
-          )}
-        </Field>
+          <Field
+            label="Password"
+            error={errors.password}
+            {...(isRegister ? { hint: 'At least 8 characters.' } : {})}
+          >
+            {(p) => (
+              <input
+                {...p}
+                type="password"
+                autoComplete={isRegister ? 'new-password' : 'current-password'}
+                value={password}
+                onChange={(e) => edit('password', setPassword)(e.target.value)}
+              />
+            )}
+          </Field>
 
-        {formError && (
-          <p role="alert" className="form-error">
-            {formError}
-          </p>
-        )}
+          {formError && (
+            <p role="alert" className="form-error">
+              {formError}
+            </p>
+          )}
 
-        <button type="submit" className="button" disabled={pending}>
-          {pending ? 'Please wait…' : isRegister ? 'Create account' : 'Log in'}
-        </button>
-      </form>
-      <p className="muted">
-        {isRegister ? (
-          <>
-            Already have an account? <Link to="/login">Log in</Link>
-          </>
-        ) : (
-          <>
-            New here? <Link to="/register">Create an account</Link>
-          </>
-        )}
-      </p>
-    </section>
+          <button type="submit" className="button large" disabled={pending}>
+            {pending ? 'Please wait…' : isRegister ? 'Create account' : 'Log in'}
+          </button>
+        </form>
+        <p className="muted">
+          {isRegister ? (
+            <>
+              Already have an account? <Link to="/login">Log in</Link>
+            </>
+          ) : (
+            <>
+              New here? <Link to="/register">Create an account</Link>
+            </>
+          )}
+        </p>
+      </section>
+    </div>
   );
 }
