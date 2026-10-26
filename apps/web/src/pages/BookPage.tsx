@@ -61,6 +61,9 @@ export function BookPage() {
             {formatDateRange(b.startDate, b.endDate)} · {formatTripLength(b.startDate, b.endDate)}
           </p>
           <div className="actions">
+            <Link to={`/books/${b.id}/read`} className="button large">
+              Open book
+            </Link>
             <button type="button" className="button ghost" onClick={() => setEditing(true)}>
               Edit details
             </button>

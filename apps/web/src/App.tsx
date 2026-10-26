@@ -8,6 +8,7 @@ import { LandingPage } from './pages/LandingPage.tsx';
 import { LibraryPage } from './pages/LibraryPage.tsx';
 import { NewBookPage } from './pages/NewBookPage.tsx';
 import { NotFoundPage } from './pages/NotFoundPage.tsx';
+import { ReaderPage } from './pages/ReaderPage.tsx';
 
 /** "/" is the library for a logged-in user and the landing page for everyone else. */
 function Home() {
@@ -19,6 +20,15 @@ function Home() {
 export function App() {
   return (
     <Routes>
+      {/* The reader is full-screen: no app header around the book. */}
+      <Route
+        path="/books/:bookId/read"
+        element={
+          <RequireAuth>
+            <ReaderPage />
+          </RequireAuth>
+        }
+      />
       <Route element={<Layout />}>
         <Route path="/login" element={<AuthPage mode="login" />} />
         <Route path="/register" element={<AuthPage mode="register" />} />

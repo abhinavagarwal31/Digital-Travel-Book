@@ -1,0 +1,498 @@
+/* The reader: a book on a dark desk. Pages are paper-coloured in both light
+   and dark mode, because the book is an object, not part of the interface. */
+
+.reader {
+  --paper-page: #fbf6ec;
+  --paper-ink: #2b241c;
+  --paper-muted: #8b7f6f;
+  --paper-accent: #a3492a;
+  /* Page size: as large as the window allows, always 3:4. */
+  --page-h: min(calc(100vh - 170px), calc((100vw - 96px) / 2 * 4 / 3));
+  --page-w: calc(var(--page-h) * 3 / 4);
+
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  color: #f1e9dd;
+  background:
+    radial-gradient(70% 60% at 50% 45%, rgb(255 236 210 / 0.08), transparent 70%),
+    radial-gradient(120% 100% at 50% 0%, #2a2119, #120e0b);
+  overflow: hidden;
+}
+
+@media (max-width: 760px) {
+  .reader {
+    --page-h: min(calc(100vh - 170px), calc((100vw - 32px) * 4 / 3));
+  }
+}
+
+.reader-message {
+  place-items: center;
+  align-content: center;
+  gap: 1rem;
+}
+
+.reader-bar,
+.reader-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem clamp(1rem, 3vw, 2rem);
+}
+
+.reader-back {
+  color: #f1e9dd;
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  opacity: 0.85;
+}
+
+.reader-back:hover {
+  opacity: 1;
+}
+
+.reader-toc select {
+  font: inherit;
+  color: #f1e9dd;
+  background: rgb(255 255 255 / 0.08);
+  border: 1px solid rgb(255 255 255 / 0.15);
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+}
+
+.reader-toc option {
+  color: #1d1a16;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.reader-stage {
+  display: grid;
+  place-items: center;
+  perspective: 2800px;
+  padding: 0.5rem;
+  user-select: none;
+}
+
+.reader-controls {
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.reader-controls p {
+  min-width: 16rem;
+  text-align: center;
+}
+
+.reader-position {
+  opacity: 0.65;
+}
+
+.turn-button {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1px solid rgb(255 255 255 / 0.2);
+  background: rgb(255 255 255 / 0.06);
+  color: #f1e9dd;
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 150ms;
+}
+
+.turn-button:hover:not(:disabled) {
+  background: rgb(255 255 255 / 0.14);
+}
+
+.turn-button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* ---------- The book ---------- */
+
+.flipbook {
+  position: relative;
+  width: calc(var(--page-w) * 2);
+  height: var(--page-h);
+  transform-style: preserve-3d;
+  transform: translateX(var(--book-offset, 0%));
+  transition: transform 700ms cubic-bezier(0.3, 0.1, 0.2, 1);
+  cursor: pointer;
+  touch-action: pan-y;
+}
+
+.flipbook.single {
+  width: var(--page-w);
+}
+
+.flipbook[data-state='closed']::before {
+  left: 52%;
+}
+
+.flipbook.double[data-state='finished']::before {
+  right: 52%;
+}
+
+/* A soft shadow the book casts on the desk, under whichever half shows a page. */
+.flipbook::before {
+  content: '';
+  position: absolute;
+  inset: 4% 2% -3%;
+  transition:
+    left 700ms,
+    right 700ms;
+  background: rgb(0 0 0 / 0.55);
+  filter: blur(28px);
+  transform: translateZ(-1px);
+}
+
+.leaf {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 50%;
+  height: 100%;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  transition: transform 900ms cubic-bezier(0.32, 0.04, 0.21, 1);
+}
+
+.single .leaf {
+  left: 0;
+  width: 100%;
+}
+
+.leaf.turned {
+  transform: rotateY(-180deg);
+}
+
+/* In single-page mode a turned page has gone; only the stack to the right shows. */
+.single .leaf.turned:not(.flying) {
+  visibility: hidden;
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background:
+    radial-gradient(140% 100% at 50% 50%, transparent 60%, rgb(120 90 50 / 0.08)), var(--paper-page);
+  color: var(--paper-ink);
+  container-type: size;
+}
+
+.face.front {
+  border-radius: 0 6px 6px 0;
+}
+
+.face.back {
+  transform: rotateY(180deg);
+  border-radius: 6px 0 0 6px;
+}
+
+/* Shade where the paper curves into the spine. */
+.face::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.face.front::after {
+  background: linear-gradient(
+    90deg,
+    rgb(60 40 20 / 0.22),
+    rgb(60 40 20 / 0.05) 5%,
+    transparent 12%
+  );
+}
+
+.face.back::after {
+  background: linear-gradient(
+    270deg,
+    rgb(60 40 20 / 0.22),
+    rgb(60 40 20 / 0.05) 5%,
+    transparent 12%
+  );
+}
+
+.single .face.front::after {
+  background: linear-gradient(90deg, rgb(60 40 20 / 0.12), transparent 6%);
+}
+
+/* A sheen and shadow sweep across a page while it turns. */
+.leaf.flying .face {
+  box-shadow: 0 0 40px rgb(0 0 0 / 0.35);
+}
+
+.leaf.flying .face::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 20%,
+    rgb(255 255 255 / 0.28) 50%,
+    rgb(0 0 0 / 0.12) 62%,
+    transparent 80%
+  );
+  animation: page-sheen 900ms ease-in-out;
+}
+
+@keyframes page-sheen {
+  from {
+    transform: translateX(-60%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  to {
+    transform: translateX(60%);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .leaf,
+  .flipbook {
+    transition: none;
+  }
+}
+
+/* ---------- Page layouts (sized in container units, so they scale with the page) ---------- */
+
+.page {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 8cqw 8cqw 10cqw;
+  font-family: var(--font-display);
+}
+
+.page img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0.8cqw;
+  background: #e9dfcf;
+}
+
+.page-number {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 4cqw;
+  text-align: center;
+  font: 2.6cqw var(--font-ui);
+  letter-spacing: 0.1em;
+  color: var(--paper-muted);
+}
+
+.page-eyebrow {
+  font: 600 2.7cqw var(--font-ui);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--paper-accent);
+  margin-bottom: 1.5cqw;
+}
+
+/* Cover: cloth board with a gilt frame. */
+.cover-page {
+  padding: 7cqw;
+  background:
+    linear-gradient(90deg, rgb(0 0 0 / 0.3) 0, rgb(255 255 255 / 0.1) 2.5%, transparent 6%),
+    radial-gradient(120% 80% at 80% 0%, rgb(255 255 255 / 0.16), transparent 60%), var(--cover);
+  color: #f6ead6;
+}
+
+.back-cover {
+  justify-content: center;
+  align-items: center;
+  background:
+    linear-gradient(270deg, rgb(0 0 0 / 0.3) 0, rgb(255 255 255 / 0.1) 2.5%, transparent 6%),
+    var(--cover);
+}
+
+.back-cover .closing-mark {
+  color: rgb(240 210 150 / 0.6);
+}
+
+.cover-frame {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3cqw;
+  text-align: center;
+  border: 0.5cqw solid rgb(240 210 150 / 0.55);
+  outline: 0.3cqw solid rgb(240 210 150 / 0.3);
+  outline-offset: -2.4cqw;
+  padding: 8cqw 6cqw;
+}
+
+.cover-frame h1 {
+  font-size: 9cqw;
+  line-height: 1.05;
+}
+
+.cover-rule {
+  width: 16cqw;
+  height: 0.4cqw;
+  background: rgb(240 210 150 / 0.7);
+}
+
+.cover-dates {
+  font: 3cqw var(--font-ui);
+  letter-spacing: 0.08em;
+  opacity: 0.85;
+}
+
+.cover-places {
+  font-style: italic;
+  font-size: 3.6cqw;
+  opacity: 0.9;
+}
+
+/* Endpaper: a faint map grid with a dotted route. */
+.endpaper {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 5.8cqw, rgb(163 73 42 / 0.07) 5.8cqw 6cqw),
+    repeating-linear-gradient(90deg, transparent 0 5.8cqw, rgb(163 73 42 / 0.07) 5.8cqw 6cqw),
+    #f3ead9;
+}
+
+.endpaper p {
+  font-style: italic;
+  font-size: 4cqw;
+  color: var(--paper-muted);
+  background: #f3ead9;
+  padding: 3cqw 5cqw;
+  border-radius: 1cqw;
+}
+
+.endpaper strong {
+  font-style: normal;
+  font-size: 5.5cqw;
+  color: var(--paper-ink);
+}
+
+.title-page {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2.5cqw;
+}
+
+.title-page h1 {
+  font-size: 9cqw;
+  line-height: 1.05;
+}
+
+.title-dates {
+  font: 3cqw var(--font-ui);
+  color: var(--paper-muted);
+}
+
+.title-places {
+  font-style: italic;
+  font-size: 4cqw;
+}
+
+.title-description {
+  margin-top: 4cqw;
+  max-width: 80%;
+  font-size: 3.6cqw;
+  font-style: italic;
+  line-height: 1.45;
+  color: #574b3d;
+}
+
+.day-page h2 {
+  font-size: 6.4cqw;
+  margin-bottom: 4cqw;
+}
+
+.day-hero {
+  flex: 1;
+  min-height: 0;
+}
+
+.day-meta {
+  margin-top: 3cqw;
+  font: 2.8cqw var(--font-ui);
+  color: var(--paper-muted);
+}
+
+.photo-layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  gap: 2.4cqw;
+}
+
+.count-1 .photo-layout {
+  grid-template: 1fr / 1fr;
+}
+
+.count-2 .photo-layout {
+  grid-template: 1fr 1fr / 1fr;
+}
+
+.count-3 .photo-layout {
+  grid-template: 1.3fr 1fr / 1fr 1fr;
+}
+
+.count-3 .photo-layout img:first-child {
+  grid-column: 1 / -1;
+}
+
+.count-4 .photo-layout {
+  grid-template: 1fr 1fr / 1fr 1fr;
+}
+
+.closing-page {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2.5cqw;
+}
+
+.closing-mark {
+  font-size: 7cqw;
+  color: var(--paper-accent);
+}
+
+.closing-page h2 {
+  font-size: 7cqw;
+}
+
+.closing-page p {
+  font: 3cqw var(--font-ui);
+  color: var(--paper-muted);
+}
+
+.closing-stats {
+  letter-spacing: 0.06em;
+}
