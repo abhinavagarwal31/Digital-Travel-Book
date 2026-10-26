@@ -7,6 +7,7 @@ import { apiNotFound, errorHandler } from './lib/errors.ts';
 import { requireJsonForWrites } from './lib/requireJson.ts';
 import { serveWebApp } from './lib/webApp.ts';
 import { createAuthRouter, type AuthRateLimit } from './modules/auth/auth.routes.ts';
+import { createBooksRouter } from './modules/books/books.routes.ts';
 
 export interface AppConfig {
   jwtSecret: string;
@@ -48,6 +49,7 @@ export function createApp(config: AppConfig): express.Express {
       authRateLimit: config.authRateLimit ?? DEFAULT_AUTH_RATE_LIMIT,
     }),
   );
+  api.use('/books', createBooksRouter(config));
 
   api.use(apiNotFound);
   app.use('/api', api);
