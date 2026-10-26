@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser';
 import express from 'express';
 import helmet from 'helmet';
 import { isDatabaseUp } from './lib/db.ts';
+import { LocalDiskStorage } from './lib/localDiskStorage.ts';
 import { apiNotFound, errorHandler } from './lib/errors.ts';
 import { requireJsonForWrites } from './lib/requireJson.ts';
 import type { ImageStorage } from './lib/storage.ts';
@@ -34,6 +35,9 @@ export function createApp(config: AppConfig): express.Express {
   // address and per-client rate limits would apply to everyone at once.
   app.set('trust proxy', 1);
   app.use(helmet());
+
+  // Development-only stand-in for Cloudinary's upload endpoint.
+  if (config.storage instanceof LocalDiskStorage) config.storage.mount(app);
 
   const api = express.Router();
   api.use(requireJsonForWrites);

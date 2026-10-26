@@ -609,3 +609,114 @@ textarea[aria-invalid='true'] {
     animation-duration: 1ms !important;
   }
 }
+
+/* ---------- Photos ---------- */
+
+.dropzone {
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+  text-align: center;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  border: 2px dashed var(--line);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  transition:
+    border-color 120ms,
+    background 120ms;
+}
+
+.dropzone.dragging {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.upload-panel {
+  padding: 1rem 1.25rem;
+}
+
+.upload-list {
+  list-style: none;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+  max-height: 220px;
+  overflow: auto;
+  font-size: 0.9rem;
+}
+
+.upload-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.upload-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-status {
+  color: var(--muted);
+  flex: none;
+}
+
+.upload-list li[data-status='done'] .upload-status {
+  color: var(--teal);
+}
+
+.photo-day header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.9rem;
+}
+
+.photo-day h3 {
+  font-size: 1.2rem;
+}
+
+.photo-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.thumb {
+  margin: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.thumb img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunk);
+  box-shadow: var(--shadow-sm);
+}
+
+.thumb figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.badge {
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}

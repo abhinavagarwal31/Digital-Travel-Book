@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { BookCover } from '../components/BookCover.tsx';
 import { BookForm, toFormValues } from '../components/BookForm.tsx';
+import { PhotoGrid } from '../components/PhotoGrid.tsx';
+import { PhotoUploader } from '../components/PhotoUploader.tsx';
 import { ApiRequestError } from '../lib/api.ts';
 import { useBook, useDeleteBook, useUpdateBook } from '../lib/books.ts';
 import { formatDateRange, formatTripLength } from '../lib/dates.ts';
+import { usePhotos } from '../lib/photos.ts';
 import { NotFoundPage } from './NotFoundPage.tsx';
 
 export function BookPage() {
@@ -12,6 +15,7 @@ export function BookPage() {
   const book = useBook(bookId);
   const updateBook = useUpdateBook(bookId);
   const deleteBook = useDeleteBook(bookId);
+  const photos = usePhotos(bookId);
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -80,6 +84,20 @@ export function BookPage() {
           </div>
         )}
       </dl>
+
+      <section className="stack" aria-labelledby="photos-heading">
+        <div className="page-title">
+          <h2 id="photos-heading">Photos</h2>
+          {photos.data && photos.data.length > 0 && (
+            <span className="muted">
+              {photos.data.filter((p) => p.status === 'ready').length} in this book
+            </span>
+          )}
+        </div>
+        <PhotoUploader bookId={b.id} />
+        {photos.isError && <p role="alert">Could not load the photos. Try reloading the page.</p>}
+        {photos.data && <PhotoGrid photos={photos.data} startDate={b.startDate} />}
+      </section>
 
       <div className="danger-zone">
         {confirmingDelete ? (

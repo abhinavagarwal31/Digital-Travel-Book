@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { createApp } from './app.ts';
 import { cloudinaryCredentials, loadEnv } from './config/env.ts';
 import { createCloudinaryStorage } from './lib/cloudinaryStorage.ts';
+import { LOCAL_STORAGE_ROOT, LocalDiskStorage } from './lib/localDiskStorage.ts';
+import type { ImageStorage } from './lib/storage.ts';
 import { startSweeper } from './modules/photos/sweeper.ts';
 
 const WEB_DIST_DIR = fileURLToPath(new URL('../../web/dist', import.meta.url));
@@ -34,9 +36,18 @@ async function main(): Promise<void> {
   await mongoose.syncIndexes();
 
   const credentials = cloudinaryCredentials(env);
-  if (!credentials) console.warn('Cloudinary is not configured: photo uploads are disabled.');
+  let storage: ImageStorage | null = null;
+  if (credentials) {
+    storage = createCloudinaryStorage(credentials);
+  } else if (env.NODE_ENV === 'development') {
+    storage = new LocalDiskStorage(LOCAL_STORAGE_ROOT);
+    console.warn(
+      `Cloudinary is not configured: storing photos on disk in ${LOCAL_STORAGE_ROOT} (development only).`,
+    );
+  } else {
+    console.warn('Cloudinary is not configured: photo uploads are disabled.');
+  }
 
-  const storage = credentials ? createCloudinaryStorage(credentials) : null;
   const app = createApp({
     jwtSecret: env.JWT_SECRET,
     cookieSecure: env.NODE_ENV === 'production',

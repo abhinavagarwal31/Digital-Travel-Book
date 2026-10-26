@@ -20,15 +20,52 @@ export interface TestExif {
   model?: string;
 }
 
+type Rgb = [number, number, number];
+
 export interface TestJpegOptions {
   width?: number;
   height?: number;
   /** Fill colour, so fixture photos are told apart at a glance in the UI. */
-  rgb?: [number, number, number];
+  rgb?: Rgb;
+  /** A sky-to-ground landscape instead of a flat fill: [sky, horizon, ground]. */
+  scene?: [Rgb, Rgb, Rgb];
   exif?: TestExif;
 }
 
-function solidJpeg(width: number, height: number, [r, g, b]: [number, number, number]): Buffer {
+const mix = (a: number, b: number, t: number) => Math.round(a + (b - a) * t);
+
+/** A soft landscape: sky gradient, a sun, and a ground band below the horizon. */
+function sceneJpeg(width: number, height: number, [sky, horizon, ground]: [Rgb, Rgb, Rgb]): Buffer {
+  const data = Buffer.alloc(width * height * 4);
+  const horizonY = Math.round(height * 0.62);
+  const sun = { x: width * 0.7, y: height * 0.38, r: height * 0.09 };
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      let rgb: Rgb;
+      if (y < horizonY) {
+        const t = y / horizonY;
+        rgb = [mix(sky[0], horizon[0], t), mix(sky[1], horizon[1], t), mix(sky[2], horizon[2], t)];
+        const d = Math.hypot(x - sun.x, y - sun.y);
+        if (d < sun.r * 2.5) {
+          const glow = Math.max(0, 1 - d / (sun.r * 2.5)) ** 2;
+          rgb = rgb.map((c) => mix(c, 255, d < sun.r ? 0.85 : glow * 0.6)) as Rgb;
+        }
+      } else {
+        const t = (y - horizonY) / (height - horizonY);
+        const ridge = Math.sin(x / (width / 9)) * 0.06;
+        rgb = ground.map((c) => Math.round(c * (1 - t * 0.45 + ridge))) as Rgb;
+      }
+      data.writeUInt8(Math.max(0, Math.min(255, rgb[0])), i);
+      data.writeUInt8(Math.max(0, Math.min(255, rgb[1])), i + 1);
+      data.writeUInt8(Math.max(0, Math.min(255, rgb[2])), i + 2);
+      data.writeUInt8(255, i + 3);
+    }
+  }
+  return jpeg.encode({ data, width, height }, 82).data;
+}
+
+function solidJpeg(width: number, height: number, [r, g, b]: Rgb): Buffer {
   const data = Buffer.alloc(width * height * 4);
   for (let i = 0; i < width * height; i++) {
     // A diagonal band adds a little texture so the image is not a flat swatch.
@@ -75,7 +112,11 @@ function exifObject(exif: TestExif): Record<string, Record<number, unknown>> {
 
 /** A real JPEG file, optionally carrying the given EXIF. */
 export function makeJpeg(options: TestJpegOptions = {}): Buffer {
-  const image = solidJpeg(options.width ?? 64, options.height ?? 48, options.rgb ?? [200, 120, 80]);
+  const width = options.width ?? 64;
+  const height = options.height ?? 48;
+  const image = options.scene
+    ? sceneJpeg(width, height, options.scene)
+    : solidJpeg(width, height, options.rgb ?? [200, 120, 80]);
   if (!options.exif) return image;
   const withExif = piexif.insert(piexif.dump(exifObject(options.exif)), image.toString('binary'));
   return Buffer.from(withExif, 'binary');

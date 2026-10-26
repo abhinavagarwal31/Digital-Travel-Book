@@ -27,3 +27,17 @@ export function formatTripLength(startDate: string, endDate: string): string {
 export function browserTimeZone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
+
+const weekdayDayMonth = new Intl.DateTimeFormat('en-GB', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  timeZone: 'UTC',
+});
+
+/** "Day 3 · Mon 12 Oct": the day's place in the trip, then its date. */
+export function formatDayHeading(dayDate: string, tripStartDate: string): string {
+  const dayNumber = tripLengthDays(tripStartDate, dayDate);
+  const date = weekdayDayMonth.format(toDate(dayDate));
+  return dayNumber >= 1 ? `Day ${dayNumber} · ${date}` : date;
+}
