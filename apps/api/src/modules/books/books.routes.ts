@@ -10,12 +10,19 @@ import { AppError } from '../../lib/errors.ts';
 import { findOwned, notFound, pathParam } from '../../lib/ownership.ts';
 import { validateBody } from '../../lib/validate.ts';
 import { authUserId, requireAuth } from '../auth/requireAuth.ts';
+import type { ImageStorage } from '../../lib/storage.ts';
 import type { SessionConfig } from '../auth/session.ts';
+import { bookStoragePrefix, PhotoModel } from '../photos/photo.model.ts';
 import { BookModel, toBookDTO } from './book.model.ts';
 
 const ACTIVE = { state: 'active' as const };
 
-export function createBooksRouter(config: SessionConfig): Router {
+export interface BooksRouterConfig extends SessionConfig {
+  storage: ImageStorage | null;
+  storageNamespace: string;
+}
+
+export function createBooksRouter(config: BooksRouterConfig): Router {
   const router = express.Router();
   router.use(requireAuth(config));
 
@@ -66,10 +73,27 @@ export function createBooksRouter(config: SessionConfig): Router {
   router.delete('/:bookId', async (req, res) => {
     const userId = authUserId(req);
     const book = await findOwned(BookModel, pathParam(req, 'bookId'), userId, ACTIVE);
-    // Mark first so the book disappears from every query at once. Photo and
-    // image cleanup joins this sequence in Slice 2; until then nothing else exists.
+
+    // Hide the book and its photos at once; their hashes are cleared so nothing blocks re-uploads.
     await BookModel.updateOne({ _id: book._id, userId }, { $set: { state: 'deleting' } });
-    await BookModel.deleteOne({ _id: book._id, userId });
+    await PhotoModel.updateMany(
+      { bookId: book._id },
+      { $set: { status: 'deleting' }, $unset: { contentHash: 1 } },
+    );
+
+    // Remove the images and photo records now. The book record itself stays in
+    // "deleting" until the sweeper's final pass, an hour later, catches any upload
+    // that was still in flight. A storage outage here just leaves more for that pass.
+    if (config.storage) {
+      try {
+        await config.storage.destroyPrefix(
+          bookStoragePrefix(config.storageNamespace, userId, book.id),
+        );
+        await PhotoModel.deleteMany({ bookId: book._id });
+      } catch {
+        // Left for the sweeper.
+      }
+    }
     res.status(204).end();
   });
 

@@ -55,14 +55,13 @@ export function createApp(config: AppConfig): express.Express {
       authRateLimit: config.authRateLimit ?? DEFAULT_AUTH_RATE_LIMIT,
     }),
   );
-  api.use('/books', createBooksRouter(config));
-  api.use(
-    createPhotosRouter({
-      ...config,
-      storage: config.storage ?? null,
-      storageNamespace: config.storageNamespace ?? 'development',
-    }),
-  );
+  const storageConfig = {
+    ...config,
+    storage: config.storage ?? null,
+    storageNamespace: config.storageNamespace ?? 'development',
+  };
+  api.use('/books', createBooksRouter(storageConfig));
+  api.use(createPhotosRouter(storageConfig));
 
   api.use(apiNotFound);
   app.use('/api', api);

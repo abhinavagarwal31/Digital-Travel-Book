@@ -11,9 +11,16 @@ import {
 import express, { type Router } from 'express';
 import mongoose, { type HydratedDocument } from 'mongoose';
 import { createHash } from 'node:crypto';
+import { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 import { AppError } from '../../lib/errors.ts';
-import { findOwned, pathParam } from '../../lib/ownership.ts';
-import { FileTooLargeError, type ImageStorage } from '../../lib/storage.ts';
+import { findOwned, notFound, pathParam } from '../../lib/ownership.ts';
+import {
+  FileTooLargeError,
+  IMAGE_VARIANTS,
+  type ImageStorage,
+  type ImageVariant,
+} from '../../lib/storage.ts';
 import { timeZoneAt } from '../../lib/timeZoneAt.ts';
 import { validateBody } from '../../lib/validate.ts';
 import { authUserId, requireAuth } from '../auth/requireAuth.ts';
@@ -232,6 +239,72 @@ export function createPhotosRouter(config: PhotosRouterConfig): Router {
       status: { $ne: 'deleting' },
     }).sort({ dayDate: 1, capturedAt: 1, createdAt: 1 });
     res.json({ photos: photos.map(toPhotoDTO) });
+  });
+
+  /**
+   * The only way an image reaches a browser: ownership is checked with the
+   * session cookie, the signed storage URL is built and fetched here, and only
+   * the bytes and their type are passed on. Nothing is cached anywhere.
+   */
+  router.get('/photos/:photoId/image/:variant', auth, async (req, res) => {
+    const variant = pathParam(req, 'variant');
+    if (!Object.hasOwn(IMAGE_VARIANTS, variant)) throw notFound();
+    const storage = storageOrFail();
+    const photo = await findOwned(PhotoModel, pathParam(req, 'photoId'), authUserId(req), {
+      status: 'ready',
+    });
+
+    let upstream: Response;
+    try {
+      upstream = await storage.fetchVariant(
+        photo.storage.publicId,
+        photo.storage.version ?? 0,
+        variant as ImageVariant,
+      );
+    } catch {
+      throw new AppError(502, 'IMAGE_UNAVAILABLE', 'Could not load this image');
+    }
+    const type = upstream.headers.get('content-type') ?? '';
+    if (!type.startsWith('image/') || !upstream.body) {
+      throw new AppError(502, 'IMAGE_UNAVAILABLE', 'Could not load this image');
+    }
+
+    // Copy only what the browser needs; storage headers may name the account.
+    res.status(200);
+    res.setHeader('Content-Type', type);
+    res.setHeader('Cache-Control', 'private, no-store');
+    const length = upstream.headers.get('content-length');
+    if (length) res.setHeader('Content-Length', length);
+    try {
+      await pipeline(Readable.fromWeb(upstream.body), res);
+    } catch {
+      // The browser went away mid-image; nothing left to answer.
+    }
+  });
+
+  /**
+   * Hides the photo at once, then removes the stored image and the record.
+   * If storage is down, the photo stays hidden in "deleting" and the sweeper
+   * finishes later. Its content hash is cleared so the same file can be added again.
+   */
+  router.delete('/photos/:photoId', auth, async (req, res) => {
+    const userId = authUserId(req);
+    const photo = await findOwned(PhotoModel, pathParam(req, 'photoId'), userId, {
+      status: { $ne: 'deleting' },
+    });
+    await PhotoModel.updateOne(
+      { _id: photo._id, userId },
+      { $set: { status: 'deleting' }, $unset: { contentHash: 1 } },
+    );
+    if (config.storage) {
+      try {
+        await config.storage.destroy(photo.storage.publicId);
+        await PhotoModel.deleteOne({ _id: photo._id, status: 'deleting' });
+      } catch {
+        // Left for the sweeper.
+      }
+    }
+    res.status(204).end();
   });
 
   return router;

@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { createApp } from './app.ts';
 import { cloudinaryCredentials, loadEnv } from './config/env.ts';
 import { createCloudinaryStorage } from './lib/cloudinaryStorage.ts';
+import { startSweeper } from './modules/photos/sweeper.ts';
 
 const WEB_DIST_DIR = fileURLToPath(new URL('../../web/dist', import.meta.url));
 
@@ -35,19 +36,23 @@ async function main(): Promise<void> {
   const credentials = cloudinaryCredentials(env);
   if (!credentials) console.warn('Cloudinary is not configured: photo uploads are disabled.');
 
+  const storage = credentials ? createCloudinaryStorage(credentials) : null;
   const app = createApp({
     jwtSecret: env.JWT_SECRET,
     cookieSecure: env.NODE_ENV === 'production',
     webDistDir,
-    storage: credentials ? createCloudinaryStorage(credentials) : null,
+    storage,
     storageNamespace: env.NODE_ENV,
   });
+  // Finishes interrupted deletions and clears abandoned uploads, every 10 minutes.
+  const stopSweeper = storage ? startSweeper(storage, env.NODE_ENV) : () => undefined;
   const server = app.listen(env.PORT, () => {
     console.log(`API listening on port ${env.PORT} (${env.NODE_ENV})`);
   });
 
   const shutdown = (signal: string) => {
     console.log(`${signal} received, shutting down`);
+    stopSweeper();
     server.close(() => {
       void mongoose.disconnect().finally(() => process.exit(0));
     });
