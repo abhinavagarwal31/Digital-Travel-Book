@@ -27,8 +27,16 @@ async function main(): Promise<void> {
     console.error(`Could not connect to MongoDB (${(err as Error).name}). Check MONGODB_URI.`);
     process.exit(1);
   }
+  // Builds the indexes declared in the schemas (e.g. unique email) before serving,
+  // so uniqueness is enforced from the very first request.
+  await mongoose.syncIndexes();
 
-  const server = createApp({ webDistDir }).listen(env.PORT, () => {
+  const app = createApp({
+    jwtSecret: env.JWT_SECRET,
+    cookieSecure: env.NODE_ENV === 'production',
+    webDistDir,
+  });
+  const server = app.listen(env.PORT, () => {
     console.log(`API listening on port ${env.PORT} (${env.NODE_ENV})`);
   });
 

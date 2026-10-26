@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../app.ts';
+import { TEST_CONFIG } from '../test/helpers.ts';
 
 // A stand-in for apps/web/dist so these tests don't depend on a real build.
 let distDir: string;
@@ -15,7 +16,7 @@ beforeAll(() => {
   writeFileSync(join(distDir, 'index.html'), '<!doctype html><div id="root"></div>');
   writeFileSync(join(distDir, 'assets', 'index-abc123.js'), 'console.log(1)');
   writeFileSync(join(distDir, 'favicon.svg'), '<svg/>');
-  app = createApp({ webDistDir: distDir });
+  app = createApp({ ...TEST_CONFIG, webDistDir: distDir });
 });
 
 afterAll(() => rmSync(distDir, { recursive: true, force: true }));
@@ -57,7 +58,7 @@ describe('serving the web app', () => {
   });
 
   it('does not serve the app shell when no build is configured', async () => {
-    const res = await request(createApp()).get('/books/123');
+    const res = await request(createApp(TEST_CONFIG)).get('/books/123');
     expect(res.status).toBe(404);
   });
 });

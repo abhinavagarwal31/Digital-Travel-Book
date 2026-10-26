@@ -9,6 +9,12 @@ const envSchema = z.object({
   MONGODB_URI: z
     .string()
     .regex(/^mongodb(\+srv)?:\/\//, 'must start with mongodb:// or mongodb+srv://'),
+  // Signs session tokens. 32+ random characters; generate with `openssl rand -base64 48`.
+  // The .env.example placeholder is long enough to pass min(32), so it is refused explicitly.
+  JWT_SECRET: z
+    .string()
+    .min(32)
+    .refine((value) => !value.startsWith('replace-with'), 'still the .env.example placeholder'),
 });
 
 export type Env = z.infer<typeof envSchema>;

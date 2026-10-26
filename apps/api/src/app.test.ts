@@ -5,9 +5,10 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createApp } from './app.ts';
 import { errorHandler } from './lib/errors.ts';
+import { TEST_CONFIG } from './test/helpers.ts';
 
 let mongo: MongoMemoryServer;
-const app = createApp();
+const app = createApp(TEST_CONFIG);
 
 beforeAll(async () => {
   mongo = await MongoMemoryServer.create();
@@ -82,7 +83,7 @@ describe('security headers', () => {
   });
 
   it('trusts exactly one proxy hop for the client IP', async () => {
-    const probe = createApp();
+    const probe = createApp(TEST_CONFIG);
     expect(probe.get('trust proxy')).toBe(1);
   });
 });
