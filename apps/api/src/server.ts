@@ -3,7 +3,8 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createApp } from './app.ts';
-import { loadEnv } from './config/env.ts';
+import { cloudinaryCredentials, loadEnv } from './config/env.ts';
+import { createCloudinaryStorage } from './lib/cloudinaryStorage.ts';
 
 const WEB_DIST_DIR = fileURLToPath(new URL('../../web/dist', import.meta.url));
 
@@ -31,10 +32,15 @@ async function main(): Promise<void> {
   // so uniqueness is enforced from the very first request.
   await mongoose.syncIndexes();
 
+  const credentials = cloudinaryCredentials(env);
+  if (!credentials) console.warn('Cloudinary is not configured: photo uploads are disabled.');
+
   const app = createApp({
     jwtSecret: env.JWT_SECRET,
     cookieSecure: env.NODE_ENV === 'production',
     webDistDir,
+    storage: credentials ? createCloudinaryStorage(credentials) : null,
+    storageNamespace: env.NODE_ENV,
   });
   const server = app.listen(env.PORT, () => {
     console.log(`API listening on port ${env.PORT} (${env.NODE_ENV})`);

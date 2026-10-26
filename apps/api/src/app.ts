@@ -5,9 +5,11 @@ import helmet from 'helmet';
 import { isDatabaseUp } from './lib/db.ts';
 import { apiNotFound, errorHandler } from './lib/errors.ts';
 import { requireJsonForWrites } from './lib/requireJson.ts';
+import type { ImageStorage } from './lib/storage.ts';
 import { serveWebApp } from './lib/webApp.ts';
 import { createAuthRouter, type AuthRateLimit } from './modules/auth/auth.routes.ts';
 import { createBooksRouter } from './modules/books/books.routes.ts';
+import { createPhotosRouter } from './modules/photos/photos.routes.ts';
 
 export interface AppConfig {
   jwtSecret: string;
@@ -17,6 +19,10 @@ export interface AppConfig {
   authRateLimit?: AuthRateLimit;
   /** Built web app to serve alongside the API (production only). */
   webDistDir?: string;
+  /** Photo storage; null until credentials are configured (uploads then answer 503). */
+  storage?: ImageStorage | null;
+  /** Storage path namespace keeping dev, test and production assets apart. */
+  storageNamespace?: string;
 }
 
 const DEFAULT_AUTH_RATE_LIMIT: AuthRateLimit = { windowMs: 15 * 60 * 1000, limit: 20 };
@@ -50,6 +56,13 @@ export function createApp(config: AppConfig): express.Express {
     }),
   );
   api.use('/books', createBooksRouter(config));
+  api.use(
+    createPhotosRouter({
+      ...config,
+      storage: config.storage ?? null,
+      storageNamespace: config.storageNamespace ?? 'development',
+    }),
+  );
 
   api.use(apiNotFound);
   app.use('/api', api);

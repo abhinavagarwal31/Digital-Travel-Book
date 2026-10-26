@@ -18,6 +18,9 @@ describe('loadEnv', () => {
   it('accepts an Atlas SRV URI and a numeric PORT string', () => {
     const env = loadEnv({
       ...required,
+      CLOUDINARY_CLOUD_NAME: 'travel-book',
+      CLOUDINARY_API_KEY: '123456789012345',
+      CLOUDINARY_API_SECRET: 'abcdefghijklmnopqrstuvwxyz',
       NODE_ENV: 'production',
       PORT: '10000',
       MONGODB_URI: 'mongodb+srv://user:pw@cluster0.example.mongodb.net/tb',
@@ -47,6 +50,37 @@ describe('loadEnv', () => {
     expect(() => loadEnv({ ...required, JWT_SECRET: placeholder })).toThrow(
       'JWT_SECRET is invalid',
     );
+  });
+
+  describe('Cloudinary', () => {
+    const cloudinary = {
+      CLOUDINARY_CLOUD_NAME: 'travel-book',
+      CLOUDINARY_API_KEY: '123456789012345',
+      CLOUDINARY_API_SECRET: 'abcdefghijklmnopqrstuvwxyz',
+    };
+
+    it('is optional in development', () => {
+      expect(() => loadEnv(required)).not.toThrow();
+    });
+
+    it('is required in production', () => {
+      expect(() => loadEnv({ ...required, NODE_ENV: 'production' })).toThrow(
+        /CLOUDINARY_CLOUD_NAME is required[\s\S]*CLOUDINARY_API_KEY is required[\s\S]*CLOUDINARY_API_SECRET is required/,
+      );
+      expect(() => loadEnv({ ...required, ...cloudinary, NODE_ENV: 'production' })).not.toThrow();
+    });
+
+    it('must be all-or-nothing', () => {
+      expect(() => loadEnv({ ...required, CLOUDINARY_CLOUD_NAME: 'travel-book' })).toThrow(
+        /CLOUDINARY_API_KEY is required/,
+      );
+    });
+
+    it('rejects a non-numeric API key without echoing it', () => {
+      expect(() => loadEnv({ ...required, ...cloudinary, CLOUDINARY_API_KEY: 'key-xyz' })).toThrow(
+        /CLOUDINARY_API_KEY is invalid/,
+      );
+    });
   });
 
   it('never echoes a value, which may be a secret', () => {
