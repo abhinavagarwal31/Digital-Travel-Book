@@ -4,6 +4,14 @@ Turn a trip's photos into a private, organised travel book with real turning pag
 
 **Live app:** https://wanderbook-7rnn.onrender.com · **Repository:** https://github.com/abhinavagarwal31/Wanderbook
 
+**Demo account** (a sample 6-day Japan trip, already uploaded and organised):
+
+| Email                 | Password          |
+| --------------------- | ----------------- |
+| `demo@wanderbook.app` | `wanderbook-demo` |
+
+Or register your own account and upload your photos.
+
 > The app runs on Render's free tier, which sleeps after ~15 minutes without visitors. The first visit after a pause can take up to a minute to wake it.
 
 ---
