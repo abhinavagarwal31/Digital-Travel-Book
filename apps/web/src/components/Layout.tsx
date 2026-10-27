@@ -1,4 +1,5 @@
 import { Link, Outlet, useNavigate } from 'react-router';
+import { useAppearance } from '../lib/appearance.ts';
 import { useCurrentUser, useLogout } from '../lib/auth.ts';
 import { initials } from '../lib/names.ts';
 import { BrandMark } from './BrandMark.tsx';
@@ -7,6 +8,18 @@ export function Layout() {
   const me = useCurrentUser();
   const logout = useLogout();
   const navigate = useNavigate();
+  const { dark, setAppearance } = useAppearance();
+  const switchAppearance = (
+    <button
+      type="button"
+      className="appearance-switch"
+      onClick={() => setAppearance(dark ? 'light' : 'dark')}
+      aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+      title={dark ? 'Light mode' : 'Dark mode'}
+    >
+      <span aria-hidden="true">{dark ? '☀' : '☾'}</span>
+    </button>
+  );
 
   return (
     <div className="app">
@@ -17,6 +30,7 @@ export function Layout() {
         </Link>
         {me.data ? (
           <div className="account">
+            {switchAppearance}
             <Link to="/plans" className="header-link">
               Plans
             </Link>
@@ -44,6 +58,7 @@ export function Layout() {
         ) : (
           me.isSuccess && (
             <div className="account">
+              {switchAppearance}
               <Link to="/plans" className="header-link">
                 Plans
               </Link>

@@ -10,6 +10,7 @@ import {
   useSignOutOthers,
   useUpdateAccount,
 } from '../lib/account.ts';
+import { useAppearance, type Appearance } from '../lib/appearance.ts';
 import { apiErrors, zodFieldErrors, type FieldErrors } from '../lib/forms.ts';
 import { initials } from '../lib/names.ts';
 
@@ -41,6 +42,7 @@ export function AccountPage() {
 
       <PlanCard account={a} />
       <ProfileForm account={a} />
+      <AppearanceChoice />
       <PasswordForm />
       <Devices />
       <DeleteAccount />
@@ -176,6 +178,42 @@ function ProfileForm({ account }: { account: Account }) {
         </span>
       </div>
     </form>
+  );
+}
+
+const APPEARANCES: { value: Appearance; label: string; hint: string }[] = [
+  { value: 'system', label: 'Same as this device', hint: 'Light or dark, following your settings' },
+  { value: 'light', label: 'Light', hint: 'Warm paper' },
+  { value: 'dark', label: 'Dark', hint: 'Easy on the eyes at night' },
+];
+
+/** Kept on this device only: a laptop and a phone can each have their own. */
+function AppearanceChoice() {
+  const { appearance, setAppearance } = useAppearance();
+  return (
+    <section className="card" aria-labelledby="appearance-heading">
+      <h2 id="appearance-heading">Appearance</h2>
+      <fieldset className="appearance-choice">
+        <legend className="visually-hidden">Appearance</legend>
+        {APPEARANCES.map((option) => (
+          <label key={option.value} data-chosen={appearance === option.value}>
+            <input
+              type="radio"
+              name="appearance"
+              value={option.value}
+              checked={appearance === option.value}
+              onChange={() => setAppearance(option.value)}
+            />
+            <span className={`appearance-swatch ${option.value}`} aria-hidden="true" />
+            <span>
+              <strong>{option.label}</strong>
+              <small className="muted">{option.hint}</small>
+            </span>
+          </label>
+        ))}
+      </fieldset>
+      <p className="hint">Saved on this device. The book itself always reads on its desk.</p>
+    </section>
   );
 }
 
