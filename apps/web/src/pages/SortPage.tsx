@@ -16,6 +16,7 @@ import { AFTER_ANY_TIME, photoImageUrl, usePhotos } from '../lib/photos.ts';
 import { useSorting, type Undo } from '../lib/sorting.ts';
 import { dayZone, DropZone, PhotoChip, SortDnd, TRAY_ZONE } from '../components/sort/dnd.tsx';
 import { NotFoundPage } from './NotFoundPage.tsx';
+import { Loading, LoadError } from '../components/LoadState.tsx';
 
 export const REASON_LABELS: Record<SortingReason, string> = {
   no_date: 'No date',
@@ -68,15 +69,31 @@ export function SortPage() {
   const [busy, setBusy] = useState(false);
   const [target, setTarget] = useState('');
 
-  if (book.isPending || photos.isPending) return <p className="muted">Loading…</p>;
+  if (book.isPending || photos.isPending) return <Loading />;
   if (book.isError) {
     if (book.error instanceof ApiRequestError && book.error.status === 404) return <NotFoundPage />;
-    return <p role="alert">Could not load this book. Try reloading the page.</p>;
+    return <LoadError what="this book" onRetry={() => void book.refetch()} />;
   }
-  if (photos.isError) return <p role="alert">Could not load the photos. Try reloading the page.</p>;
+  if (photos.isError) {
+    return <LoadError what="the photos" onRetry={() => void photos.refetch()} />;
+  }
 
   const b = book.data;
   const ready = photos.data.filter((p) => p.status === 'ready');
+  if (ready.length === 0) {
+    return (
+      <section className="card narrow stack empty-state">
+        <h1>Nothing to sort yet</h1>
+        <p className="muted">
+          Add your trip photos first. Most land in the right day on their own; any that cannot will
+          wait here for you.
+        </p>
+        <Link to={`/books/${b.id}`} className="button">
+          Add photos
+        </Link>
+      </section>
+    );
+  }
   const summary = sortingSummary(ready);
   const statusOf = new Map(ready.map((p) => [p.id, sortingStatus(p)]));
   const tray = ready.filter((p) => statusOf.get(p.id)?.toSort).sort(byFilename);

@@ -1,3 +1,4 @@
+import { Loading, LoadError } from '../components/LoadState.tsx';
 import { Link } from 'react-router';
 import { BookCover } from '../components/BookCover.tsx';
 import { useBooks } from '../lib/books.ts';
@@ -19,8 +20,8 @@ export function LibraryPage() {
         )}
       </div>
 
-      {books.isPending && <p className="muted">Loading your books…</p>}
-      {books.isError && <p role="alert">Could not load your books. Try reloading the page.</p>}
+      {books.isPending && <Loading label="Loading your books…" />}
+      {books.isError && <LoadError what="your books" onRetry={() => void books.refetch()} />}
 
       {books.data?.length === 0 && (
         <div className="card empty">

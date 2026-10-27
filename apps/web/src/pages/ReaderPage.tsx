@@ -1,6 +1,7 @@
 import { composeBook, resolveTheme, type BookPage } from '@tb/shared';
 import { useEffect, useMemo } from 'react';
 import { Link, useParams } from 'react-router';
+import { ErrorBoundary } from '../components/ErrorBoundary.tsx';
 import { FlipBook } from '../components/reader/FlipBook.tsx';
 import { PageView } from '../components/reader/PageView.tsx';
 import { useFlipBook } from '../components/reader/useFlipBook.ts';
@@ -61,7 +62,14 @@ export function ReaderPage() {
   if (book.isError || photos.isError) {
     return (
       <div className="reader reader-message">
-        <p role="alert">Could not open this book.</p>
+        <p role="alert">Could not open this book. Check your connection and try again.</p>
+        <button
+          type="button"
+          className="button"
+          onClick={() => void Promise.all([book.refetch(), photos.refetch()])}
+        >
+          Try again
+        </button>
         <Link to="/">Back to my books</Link>
       </div>
     );
@@ -105,6 +113,13 @@ export function ReaderPage() {
       </header>
 
       {/* The theme styles the book only; the controls around it stay the app's. */}
+      {!pages.some((p) => p.kind === 'day' || p.kind === 'diary') && (
+        <p className="reader-empty">
+          This book has no pages of its own yet. <Link to={`/books/${b.id}`}>Add photos</Link> or{' '}
+          <Link to={`/books/${b.id}/write`}>write a diary entry</Link> to fill it.
+        </p>
+      )}
+
       <main
         className="reader-stage"
         style={themeStyle(theme.definition)}
@@ -122,14 +137,23 @@ export function ReaderPage() {
           label={b.title}
           renderPage={(index) => {
             const page = pages[index];
+            // One page failing to draw leaves a quiet blank page, not a broken book.
             return page ? (
-              <PageView
-                page={page}
-                index={index}
-                book={b}
-                theme={theme.definition}
-                ownerName={me.data?.name ?? ''}
-              />
+              <ErrorBoundary
+                fallback={() => (
+                  <div className="page page-failed">
+                    <p>This page could not be shown.</p>
+                  </div>
+                )}
+              >
+                <PageView
+                  page={page}
+                  index={index}
+                  book={b}
+                  theme={theme.definition}
+                  ownerName={me.data?.name ?? ''}
+                />
+              </ErrorBoundary>
             ) : null;
           }}
         />

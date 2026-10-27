@@ -11,6 +11,7 @@ import { useBook, useDeleteBook, useSetCover, useUpdateBook } from '../lib/books
 import { formatDateRange, formatTripLength } from '../lib/dates.ts';
 import { usePhotos } from '../lib/photos.ts';
 import { NotFoundPage } from './NotFoundPage.tsx';
+import { Loading, LoadError } from '../components/LoadState.tsx';
 
 export function BookPage() {
   const { bookId = '' } = useParams();
@@ -23,10 +24,10 @@ export function BookPage() {
   const [editing, setEditing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
-  if (book.isPending) return <p className="muted">Loading…</p>;
+  if (book.isPending) return <Loading />;
   if (book.isError) {
     if (book.error instanceof ApiRequestError && book.error.status === 404) return <NotFoundPage />;
-    return <p role="alert">Could not load this book. Try reloading the page.</p>;
+    return <LoadError what="this book" onRetry={() => void book.refetch()} />;
   }
 
   const b = book.data;
@@ -119,7 +120,7 @@ export function BookPage() {
           )}
         </div>
         <PhotoUploader bookId={b.id} />
-        {photos.isError && <p role="alert">Could not load the photos. Try reloading the page.</p>}
+        {photos.isError && <LoadError what="the photos" onRetry={() => void photos.refetch()} />}
         {setCover.isError && (
           <p role="alert" className="form-error">
             Could not change the cover. Try again.

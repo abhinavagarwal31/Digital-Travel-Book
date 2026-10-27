@@ -25,6 +25,7 @@ import { formatDayHeading } from '../lib/dates.ts';
 import { useJournal } from '../lib/journal.ts';
 import { photoImageUrl, usePhotos } from '../lib/photos.ts';
 import { NotFoundPage } from './NotFoundPage.tsx';
+import { Loading, LoadError } from '../components/LoadState.tsx';
 
 const LAYOUT_LABELS: Record<PhotoLayout, string> = {
   'hero-1': 'One photo a page',
@@ -54,12 +55,14 @@ export function WritePage() {
       journal.savePhotoOrder(date, ids),
   });
 
-  if (book.isPending || photos.isPending) return <p className="muted">Loading…</p>;
+  if (book.isPending || photos.isPending) return <Loading />;
   if (book.isError) {
     if (book.error instanceof ApiRequestError && book.error.status === 404) return <NotFoundPage />;
-    return <p role="alert">Could not load this book. Try reloading the page.</p>;
+    return <LoadError what="this book" onRetry={() => void book.refetch()} />;
   }
-  if (photos.isError) return <p role="alert">Could not load the photos. Try reloading the page.</p>;
+  if (photos.isError) {
+    return <LoadError what="the photos" onRetry={() => void photos.refetch()} />;
+  }
 
   const b = book.data;
   const ready = photos.data.filter((p) => p.status === 'ready');

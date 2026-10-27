@@ -802,3 +802,30 @@
 .cover-page.with-photo .cover-frame {
   text-shadow: 0 0.3cqw 1.5cqw rgb(0 0 0 / 0.45);
 }
+
+.page-failed {
+  justify-content: center;
+  align-items: center;
+  font: italic 3cqw var(--font-display);
+  color: var(--paper-muted);
+}
+
+/* Floats over the stage, so the reader's three rows stay as they are. */
+.reader-empty {
+  position: absolute;
+  top: 4.2rem;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 5;
+  width: max-content;
+  max-width: calc(100vw - 2rem);
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.08);
+  text-align: center;
+  font-size: 0.92rem;
+}
+
+.reader-empty a {
+  color: #f6d9b8;
+}
