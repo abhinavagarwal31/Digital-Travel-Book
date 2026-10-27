@@ -5,6 +5,7 @@ import { BookCover } from '../components/BookCover.tsx';
 import { BookForm, toFormValues } from '../components/BookForm.tsx';
 import { PhotoGrid } from '../components/PhotoGrid.tsx';
 import { PhotoUploader } from '../components/PhotoUploader.tsx';
+import { ThemePicker } from '../components/ThemePicker.tsx';
 import { ApiRequestError } from '../lib/api.ts';
 import { useBook, useDeleteBook, useUpdateBook } from '../lib/books.ts';
 import { formatDateRange, formatTripLength } from '../lib/dates.ts';
@@ -120,6 +121,8 @@ export function BookPage() {
         {photos.isError && <p role="alert">Could not load the photos. Try reloading the page.</p>}
         {photos.data && <PhotoGrid photos={photos.data} startDate={b.startDate} />}
       </section>
+
+      <ThemePicker book={b} />
 
       <div className="danger-zone">
         {confirmingDelete ? (

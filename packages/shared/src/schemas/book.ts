@@ -74,6 +74,10 @@ export const bookSchema = z.object({
   updatedAt: z.string(),
 });
 
+/** Choosing a theme always picks its newest version. */
+export const setThemeBodySchema = z.strictObject({ id: z.enum(THEME_IDS) });
+
 export type CreateBookBody = z.infer<typeof createBookBodySchema>;
 export type UpdateBookBody = z.infer<typeof updateBookBodySchema>;
 export type Book = z.infer<typeof bookSchema>;
+export type SetThemeBody = z.infer<typeof setThemeBodySchema>;

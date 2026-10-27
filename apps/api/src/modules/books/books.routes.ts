@@ -1,9 +1,12 @@
 import {
   captureFields,
   createBookBodySchema,
+  latestThemeVersion,
+  setThemeBodySchema,
   tripRangeProblem,
   updateBookBodySchema,
   type CreateBookBody,
+  type SetThemeBody,
   type UpdateBookBody,
 } from '@tb/shared';
 import express, { type Router } from 'express';
@@ -92,6 +95,15 @@ export function createBooksRouter(config: BooksRouterConfig): Router {
     // moving photos the user placed, never deleting diaries or chapters).
     const datesOrZone = changes.startDate || changes.endDate || changes.defaultTz;
     const book = datesOrZone ? (await reorganize(updated.id, userId)).book : updated;
+    res.json({ book: toBookDTO(book) });
+  });
+
+  // A book only moves to a newer version of its theme when its owner picks the theme again.
+  router.put('/:bookId/theme', validateBody(setThemeBodySchema), async (req, res) => {
+    const { id } = req.body as SetThemeBody;
+    const book = await findOwned(BookModel, pathParam(req, 'bookId'), authUserId(req), ACTIVE);
+    book.theme = { kind: 'preset', id, version: latestThemeVersion(id) };
+    await book.save();
     res.json({ book: toBookDTO(book) });
   });
 

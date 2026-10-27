@@ -1310,3 +1310,156 @@ textarea[aria-invalid='true'] {
   padding: 0.5rem 0.65rem;
   font-size: 0.9rem;
 }
+
+/* ---------- Book style picker ---------- */
+
+.notice {
+  background: var(--accent-soft);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.8rem;
+  font-size: 0.9rem;
+}
+
+.theme-picker {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+/* The card is the size reference for its preview (cqw below). */
+.theme-card {
+  container-type: inline-size;
+  position: relative;
+  display: grid;
+  gap: 0.9rem;
+  padding: 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition:
+    border-color 150ms,
+    box-shadow 150ms,
+    transform 150ms;
+}
+
+.theme-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.theme-card[data-chosen='true'] {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 2px var(--accent),
+    var(--shadow);
+}
+
+/* The radio stays real (keyboard, screen readers) but the card shows the state. */
+.theme-card input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.theme-card:has(input:focus-visible) {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.theme-card[data-chosen='true']::after {
+  content: '✓';
+  position: absolute;
+  top: 1.3rem;
+  right: 1.3rem;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.theme-card-text {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.88rem;
+}
+
+.theme-card-text strong {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+}
+
+/* A tiny page in the theme's own colours, type and photo frame. */
+.theme-preview {
+  display: flex;
+  flex-direction: column;
+  aspect-ratio: 4 / 3;
+  padding: 7cqw 9cqw;
+  border-radius: var(--radius-sm);
+  background: var(--paper-page);
+  color: var(--paper-ink);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.06);
+  overflow: hidden;
+}
+
+.theme-preview-eyebrow {
+  font: 600 4.2cqw var(--font-ui);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--paper-accent);
+}
+
+.theme-preview-title {
+  font-family: var(--font-display);
+  font-size: 11cqw;
+  line-height: 1.1;
+  margin-bottom: 3cqw;
+}
+
+.theme-preview-photo {
+  flex: 1;
+  border-radius: 1.2cqw;
+  background: linear-gradient(180deg, #e7a46b 0%, #f4cf98 48%, #5b3a2c 49%, #2d1e18 100%);
+}
+
+.theme-preview[data-frame='plain'] .theme-preview-photo {
+  border-radius: 0;
+}
+
+.theme-preview[data-frame='mounted'] .theme-preview-photo {
+  outline: 1.6cqw solid #fffaf0;
+  outline-offset: -1.6cqw;
+  box-shadow: 0 1cqw 3cqw rgb(60 40 20 / 0.25);
+}
+
+.theme-preview[data-frame='polaroid'] .theme-preview-photo {
+  border: 2.4cqw solid #fffdf8;
+  border-bottom-width: 7cqw;
+  border-radius: 0.6cqw;
+  rotate: -2deg;
+  box-shadow: 0 1cqw 3cqw rgb(50 35 20 / 0.3);
+}
+
+.theme-preview-caption {
+  margin-top: 2.5cqw;
+  font-family: var(--font-caption);
+  font-size: 5cqw;
+  font-style: italic;
+  color: var(--paper-muted);
+}
+
+.theme-preview[data-frame='polaroid'] .theme-preview-caption {
+  font-style: normal;
+  font-size: 6.4cqw;
+}

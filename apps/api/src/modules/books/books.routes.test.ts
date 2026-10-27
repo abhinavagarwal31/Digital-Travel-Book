@@ -127,6 +127,44 @@ describe('updating books', () => {
   });
 });
 
+describe('choosing a theme', () => {
+  it('sets the theme at its newest version', async () => {
+    const asha = await loggedInAgent(app, 'asha@example.com');
+    const { id } = (await asha.post('/api/books').send(JAPAN)).body.book;
+    const res = await asha.put(`/api/books/${id}/theme`).send({ id: 'scrapbook' });
+    expect(res.status).toBe(200);
+    expect(res.body.book.theme).toEqual({ kind: 'preset', id: 'scrapbook', version: 1 });
+    expect((await asha.get(`/api/books/${id}`)).body.book.theme.id).toBe('scrapbook');
+  });
+
+  it('moves a book pinned to an old version forward only when the theme is picked again', async () => {
+    const asha = await loggedInAgent(app, 'asha@example.com');
+    const { id } = (await asha.post('/api/books').send(JAPAN)).body.book;
+    await BookModel.updateOne({ _id: id }, { $set: { 'theme.version': 7 } });
+    expect(
+      (await asha.patch(`/api/books/${id}`).send({ title: 'Edited' })).body.book.theme,
+    ).toEqual({ kind: 'preset', id: 'editorial', version: 7 });
+    const res = await asha.put(`/api/books/${id}/theme`).send({ id: 'editorial' });
+    expect(res.body.book.theme.version).toBe(1);
+  });
+
+  it('accepts only a known theme and nothing else', async () => {
+    const asha = await loggedInAgent(app, 'asha@example.com');
+    const { id } = (await asha.post('/api/books').send(JAPAN)).body.book;
+    for (const body of [
+      { id: 'vaporwave' },
+      {},
+      { id: 'atlas', version: 1 },
+      { id: 'atlas', kind: 'custom' },
+    ]) {
+      const res = await asha.put(`/api/books/${id}/theme`).send(body);
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('VALIDATION_FAILED');
+    }
+    expect((await BookModel.findById(id))?.theme.id).toBe('editorial');
+  });
+});
+
 describe('deleting books', () => {
   it('removes the book so it can no longer be read', async () => {
     const asha = await loggedInAgent(app, 'asha@example.com');
@@ -173,6 +211,13 @@ describe('ownership: another user gets 404 and changes nothing', () => {
     expect((await BookModel.findById(bookId))?.title).toBe(JAPAN.title);
   });
 
+  it('cannot change its theme', async () => {
+    const res = await ben.put(`/api/books/${bookId}/theme`).send({ id: 'atlas' });
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual(NOT_FOUND);
+    expect((await BookModel.findById(bookId))?.theme.id).toBe('editorial');
+  });
+
   it('cannot delete it', async () => {
     const res = await ben.delete(`/api/books/${bookId}`);
     expect(res.status).toBe(404);
@@ -200,9 +245,10 @@ describe('authentication is required on every book route', () => {
     ['GET', `/api/books/${id}`],
     ['PATCH', `/api/books/${id}`],
     ['DELETE', `/api/books/${id}`],
+    ['PUT', `/api/books/${id}/theme`],
   ])('%s %s answers 401 when logged out', async (method, path) => {
     const res = await request(app)
-      [method.toLowerCase() as 'get' | 'post' | 'patch' | 'delete'](path)
+      [method.toLowerCase() as 'get' | 'post' | 'patch' | 'put' | 'delete'](path)
       .send(method === 'GET' || method === 'DELETE' ? undefined : JAPAN);
     expect(res.status).toBe(401);
     expect(res.body.error.code).toBe('UNAUTHENTICATED');

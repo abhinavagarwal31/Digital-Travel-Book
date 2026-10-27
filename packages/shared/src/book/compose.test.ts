@@ -1,6 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { chunkSizes, composeBook, type ComposableBook, type ComposablePhoto } from './compose.ts';
+import { atlasV1 } from '../themes/atlas.v1.ts';
+import type { ThemeDefinition } from '../themes/definition.ts';
+import { scrapbookV1 } from '../themes/scrapbook.v1.ts';
+import {
+  chunkSizes,
+  composeBook as composeWith,
+  type ComposableBook,
+  type ComposablePhoto,
+} from './compose.ts';
 import { DIARY_BUDGET } from './paginate.ts';
+
+// Atlas allows four photos a page, which most cases below assume.
+const composeBook = (
+  book: ComposableBook,
+  photos: ComposablePhoto[],
+  theme: ThemeDefinition = atlasV1,
+) => composeWith(book, photos, theme);
 
 const BOOK: ComposableBook = { startDate: '2026-10-10', days: [], chapters: [] };
 
@@ -43,7 +58,28 @@ describe('chunkSizes', () => {
   });
 });
 
+describe('chunkSizes with fewer photos a page', () => {
+  it.each([
+    [3, 4, [2, 2]],
+    [3, 7, [3, 2, 2]],
+    [2, 3, [2, 1]],
+    [1, 3, [1, 1, 1]],
+  ])('with %i a page, splits %i photos as %j', (max, count, sizes) => {
+    expect(chunkSizes(count, max)).toEqual(sizes);
+  });
+});
+
 describe('composeBook', () => {
+  it('lets the theme decide how many photos share a page', () => {
+    const photos = Array.from({ length: 5 }, (_, i) => photo('2026-10-10', `0${i}:00:00`));
+    const sizes = (theme: ThemeDefinition) =>
+      composeBook(BOOK, photos, theme).flatMap((p) =>
+        p.kind === 'photos' ? [p.photoIds.length] : [],
+      );
+    expect(sizes(atlasV1)).toEqual([4]);
+    expect(sizes(scrapbookV1)).toEqual([2, 2]);
+  });
+
   it('builds front matter, one opener per day, photo pages in time order and a closing page', () => {
     const late = photo('2026-10-12', '18:30:00');
     const early = photo('2026-10-12', '08:05:00');

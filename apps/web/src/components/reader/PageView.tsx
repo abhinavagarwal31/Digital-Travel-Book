@@ -1,4 +1,4 @@
-import type { Book, BookPage } from '@tb/shared';
+import type { Book, BookPage, ThemeDefinition } from '@tb/shared';
 import type { CSSProperties } from 'react';
 import { formatDateRange, formatTripLength } from '../../lib/dates.ts';
 import { photoImageUrl } from '../../lib/photos.ts';
@@ -40,20 +40,19 @@ interface PageViewProps {
   page: BookPage;
   index: number;
   book: Book;
+  theme: ThemeDefinition;
   ownerName: string;
 }
 
 /** One page of the book. Every word on it comes from the user's own data. */
-export function PageView({ page, index, book, ownerName }: PageViewProps) {
+export function PageView({ page, index, book, theme, ownerName }: PageViewProps) {
+  const cover = { '--cover': theme.colors.cover ?? coverColour(book.id) } as CSSProperties;
   const number = <span className="page-number">{index}</span>;
 
   switch (page.kind) {
     case 'cover':
       return (
-        <div
-          className="page cover-page"
-          style={{ '--cover': coverColour(book.id) } as CSSProperties}
-        >
+        <div className="page cover-page" style={cover}>
           <div className="cover-frame">
             <span className="cover-rule" />
             <h1>{book.title}</h1>
@@ -100,7 +99,7 @@ export function PageView({ page, index, book, ownerName }: PageViewProps) {
           <p className="page-eyebrow">The journey</p>
           <RouteMapView
             map={page.map}
-            theme={book.theme.id}
+            tiles={theme.map.tiles}
             width={600}
             height={560}
             label={`Map of the trip: ${page.map.pins.length} chapters, in reading order`}
@@ -127,7 +126,7 @@ export function PageView({ page, index, book, ownerName }: PageViewProps) {
           {page.map && (
             <RouteMapView
               map={page.map}
-              theme={book.theme.id}
+              tiles={theme.map.tiles}
               width={600}
               height={560}
               label={
@@ -227,10 +226,7 @@ export function PageView({ page, index, book, ownerName }: PageViewProps) {
 
     case 'back-cover':
       return (
-        <div
-          className="page cover-page back-cover"
-          style={{ '--cover': coverColour(book.id) } as CSSProperties}
-        >
+        <div className="page cover-page back-cover" style={cover}>
           <span className="closing-mark" aria-hidden="true">
             ✦
           </span>

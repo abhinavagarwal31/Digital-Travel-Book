@@ -1,9 +1,9 @@
-import type { RouteMap, ThemeId } from '@tb/shared';
+import type { MapTileStyle, RouteMap } from '@tb/shared';
 import { fitMap, MAP_STYLES } from '../../lib/staticMap.ts';
 
 interface RouteMapViewProps {
   map: RouteMap;
-  theme: ThemeId;
+  tiles: MapTileStyle;
   width: number;
   height: number;
   /** Read out instead of the picture, e.g. "Map of 4 places photographed, in order". */
@@ -19,14 +19,14 @@ interface RouteMapViewProps {
  */
 export function RouteMapView({
   map,
-  theme,
+  tiles,
   width,
   height,
   label,
   caption,
   className,
 }: RouteMapViewProps) {
-  const style = MAP_STYLES[theme];
+  const style = MAP_STYLES[tiles];
   const view = fitMap(
     [...map.pins.map((p) => p.point), ...map.segments.flatMap((s) => [s.from, s.to])],
     width,

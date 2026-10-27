@@ -1,0 +1,45 @@
+import { describe, expect, it } from 'vitest';
+import { THEME_IDS } from '../schemas/book.ts';
+import { themeDefinitionSchema } from './definition.ts';
+import { editorialV1 } from './editorial.v1.ts';
+import { DEFAULT_THEME_ID, PRESET_THEMES, latestThemeVersion, resolveTheme } from './registry.ts';
+
+describe('theme definitions', () => {
+  it('offers every preset theme, each valid', () => {
+    expect(PRESET_THEMES.map((t) => t.id)).toEqual([...THEME_IDS]);
+    for (const t of PRESET_THEMES) expect(themeDefinitionSchema.parse(t.definition)).toBeTruthy();
+  });
+
+  it('accepts only hex colours, listed fonts and an allowed default layout', () => {
+    const broken = (change: object) =>
+      themeDefinitionSchema.safeParse({ ...editorialV1, ...change }).success;
+    expect(broken({})).toBe(true);
+    expect(broken({ colors: { ...editorialV1.colors, ink: 'red' } })).toBe(false);
+    expect(broken({ colors: { ...editorialV1.colors, ink: 'url(x)' } })).toBe(false);
+    expect(broken({ fonts: { ...editorialV1.fonts, body: 'comic-sans' } })).toBe(false);
+    expect(broken({ photos: { ...editorialV1.photos, defaultLayout: 'grid-4' } })).toBe(false);
+    expect(broken({ css: 'body { display: none }' })).toBe(false);
+  });
+});
+
+describe('resolveTheme', () => {
+  it('renders exactly the pinned version', () => {
+    const t = resolveTheme({ id: 'scrapbook', version: 1 });
+    expect(t).toMatchObject({ id: 'scrapbook', version: 1, notice: null });
+    expect(t.definition.name).toBe('Scrapbook');
+  });
+
+  it('falls back to the latest version of the same theme, and says so', () => {
+    const t = resolveTheme({ id: 'atlas', version: 99 });
+    expect(t).toMatchObject({ id: 'atlas', version: latestThemeVersion('atlas') });
+    expect(t.notice).toMatch(/Illustrated Atlas, version 99.*latest version/);
+    expect(resolveTheme({ id: 'atlas', version: 0 }).notice).not.toBeNull();
+    expect(resolveTheme({ id: 'atlas', version: 1.5 }).notice).not.toBeNull();
+  });
+
+  it('falls back to the default theme for an unknown one, and says so', () => {
+    const t = resolveTheme({ id: 'vaporwave', version: 1 });
+    expect(t.id).toBe(DEFAULT_THEME_ID);
+    expect(t.notice).toMatch(/no longer available, so Minimal Editorial is shown/);
+  });
+});

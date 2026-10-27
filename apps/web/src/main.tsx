@@ -4,8 +4,10 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
 import { App } from './App.tsx';
 import { ApiRequestError } from './lib/api.ts';
+import '@fontsource-variable/caveat';
 import '@fontsource-variable/fraunces';
 import '@fontsource-variable/inter';
+import '@fontsource-variable/playfair-display';
 import './styles.css';
 
 const queryClient = new QueryClient({

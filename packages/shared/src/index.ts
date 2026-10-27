@@ -17,3 +17,5 @@ export * from './schemas/health.ts';
 export * from './schemas/journal.ts';
 export * from './schemas/organize.ts';
 export * from './schemas/photo.ts';
+export * from './themes/definition.ts';
+export * from './themes/registry.ts';

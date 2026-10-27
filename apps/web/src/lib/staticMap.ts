@@ -1,4 +1,4 @@
-import type { LatLng, ThemeId } from '@tb/shared';
+import type { LatLng, MapTileStyle } from '@tb/shared';
 
 /**
  * Static maps drawn from plain map tiles and SVG, with no map library. The
@@ -19,19 +19,19 @@ interface TileStyle {
 
 const OSM = '© OpenMapTiles © OpenStreetMap';
 
-/** Each theme's tiles, all from Stadia Maps (free for localhost; a registered domain in production). */
-export const MAP_STYLES: Record<ThemeId, TileStyle> = {
-  atlas: {
+/** The tile styles a theme can choose, all from Stadia Maps (free for localhost; a registered domain in production). */
+export const MAP_STYLES: Record<MapTileStyle, TileStyle> = {
+  stamen_watercolor: {
     path: 'stamen_watercolor',
     ext: 'jpg',
     attribution: `© Stadia Maps © Stamen Design ${OSM}`,
   },
-  scrapbook: {
+  stamen_toner_lite: {
     path: 'stamen_toner_lite',
     ext: 'png',
     attribution: `© Stadia Maps © Stamen Design ${OSM}`,
   },
-  editorial: { path: 'alidade_smooth', ext: 'png', attribution: `© Stadia Maps ${OSM}` },
+  alidade_smooth: { path: 'alidade_smooth', ext: 'png', attribution: `© Stadia Maps ${OSM}` },
 };
 
 export const tileUrl = (style: TileStyle, z: number, x: number, y: number) =>

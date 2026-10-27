@@ -2,6 +2,7 @@ import { computeStops, type Stop } from '../organize/stops.ts';
 import { contentDays, resolveChapters } from '../organize/structure.ts';
 import { DEFAULT_ORGANIZE_CONFIG, type Chapter, type OrganizablePhoto } from '../organize/types.ts';
 import { tripLengthDays } from '../schemas/book.ts';
+import { LAYOUT_CAPACITY, type ThemeDefinition } from '../themes/definition.ts';
 import { chapterRouteMap, tripRouteMap, type RouteMap } from './maps.ts';
 import { DIARY_BUDGET, paginateText } from './paginate.ts';
 
@@ -69,17 +70,16 @@ export interface ComposableBook {
   chapters: Chapter[];
 }
 
-export const MAX_PHOTOS_PER_PAGE = 4;
-
 /**
- * How many photos go on each page after a day's opener: groups of up to four,
- * never leaving a single photo alone after a full page (5 → 3 + 2).
+ * How many photos go on each page after a day's opener: groups of up to `max`,
+ * never leaving a single photo alone after a full page (with four a page,
+ * 5 → 3 + 2; with three, 4 → 2 + 2).
  */
-export function chunkSizes(count: number): number[] {
+export function chunkSizes(count: number, max = 4): number[] {
   const sizes: number[] = [];
   let left = count;
   while (left > 0) {
-    const size = left <= MAX_PHOTOS_PER_PAGE ? left : left === 5 ? 3 : MAX_PHOTOS_PER_PAGE;
+    const size = left <= max ? left : left === max + 1 && max > 2 ? max - 1 : max;
     sizes.push(size);
     left -= size;
   }
@@ -109,6 +109,7 @@ function dayPages(
   dayDate: string,
   photos: ComposablePhoto[],
   diary: string,
+  perPage: number,
 ): BookPage[] {
   const dayNumber = tripLengthDays(book.startDate, dayDate);
   const [hero, ...rest] = inTimeOrder(photos);
@@ -133,7 +134,7 @@ function dayPages(
     pages.push({ kind: 'diary', dayDate, dayNumber, ...text, opensDay: !hero && i === 0 });
   });
   let offset = 0;
-  for (const size of chunkSizes(rest.length)) {
+  for (const size of chunkSizes(rest.length, perPage)) {
     const chunk = rest.slice(offset, offset + size);
     pages.push({
       kind: 'photos',
@@ -151,14 +152,19 @@ function dayPages(
  * trip (when two or more chapters have places on it), then each chapter: an
  * opener with its own map, then its days: an opener (the first photo as
  * hero), the diary, and the remaining photos in time order. Then a closing page
- * and the back cover. Like a printed book it has an even number of pages, so
+ * and the back cover. The theme decides how many photos share a page. Like a printed book it has an even number of pages, so
  * the back cover is always the back of the last leaf.
  *
  * Photos without a day, hidden photos and photos still uploading are left
  * out; so are locations flagged as suspicious until the user confirms them.
  * The same inputs always give the same pages.
  */
-export function composeBook(book: ComposableBook, photos: ComposablePhoto[]): BookPage[] {
+export function composeBook(
+  book: ComposableBook,
+  photos: ComposablePhoto[],
+  theme: ThemeDefinition,
+): BookPage[] {
+  const perPage = LAYOUT_CAPACITY[theme.photos.defaultLayout];
   const inBook = photos.filter((p) => p.status === 'ready' && !p.hidden && p.dayDate);
   const byDay = new Map<string, ComposablePhoto[]>();
   for (const photo of inBook) {
@@ -241,7 +247,7 @@ export function composeBook(book: ComposableBook, photos: ComposablePhoto[]): Bo
     for (const dayDate of section.days) {
       const dayPhotos = byDay.get(dayDate) ?? [];
       photoCount += dayPhotos.length;
-      pages.push(...dayPages(book, dayDate, dayPhotos, diaries.get(dayDate) ?? ''));
+      pages.push(...dayPages(book, dayDate, dayPhotos, diaries.get(dayDate) ?? '', perPage));
     }
   }
 

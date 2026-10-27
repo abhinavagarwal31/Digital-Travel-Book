@@ -1,4 +1,4 @@
-import { composeBook, type BookPage } from '@tb/shared';
+import { composeBook, resolveTheme, type BookPage } from '@tb/shared';
 import { useEffect, useMemo } from 'react';
 import { Link, useParams } from 'react-router';
 import { FlipBook } from '../components/reader/FlipBook.tsx';
@@ -9,6 +9,7 @@ import { useBook } from '../lib/books.ts';
 import { formatDayHeading } from '../lib/dates.ts';
 import { visiblePages } from '../lib/flip.ts';
 import { usePhotos } from '../lib/photos.ts';
+import { themeStyle } from '../lib/theme.ts';
 import '../reader.css';
 
 function contents(pages: BookPage[], startDate: string) {
@@ -34,9 +35,13 @@ export function ReaderPage() {
   const photos = usePhotos(bookId);
   const me = useCurrentUser();
 
+  const theme = useMemo(() => (book.data ? resolveTheme(book.data.theme) : null), [book.data]);
   const pages = useMemo(
-    () => (book.data && photos.data ? composeBook(book.data, photos.data) : []),
-    [book.data, photos.data],
+    () =>
+      book.data && photos.data && theme
+        ? composeBook(book.data, photos.data, theme.definition)
+        : [],
+    [book.data, photos.data, theme],
   );
   const flip = useFlipBook(pages.length);
   const { next, prev } = flip;
@@ -61,7 +66,7 @@ export function ReaderPage() {
       </div>
     );
   }
-  if (!book.data || !photos.data) {
+  if (!book.data || !photos.data || !theme) {
     return <div className="reader reader-message">Opening the book…</div>;
   }
 
@@ -99,7 +104,12 @@ export function ReaderPage() {
         </label>
       </header>
 
-      <main className="reader-stage">
+      {/* The theme styles the book only; the controls around it stay the app's. */}
+      <main
+        className="reader-stage"
+        style={themeStyle(theme.definition)}
+        data-frame={theme.definition.photos.frame}
+      >
         <FlipBook
           pageCount={pages.length}
           mode={flip.mode}
@@ -113,7 +123,13 @@ export function ReaderPage() {
           renderPage={(index) => {
             const page = pages[index];
             return page ? (
-              <PageView page={page} index={index} book={b} ownerName={me.data?.name ?? ''} />
+              <PageView
+                page={page}
+                index={index}
+                book={b}
+                theme={theme.definition}
+                ownerName={me.data?.name ?? ''}
+              />
             ) : null;
           }}
         />

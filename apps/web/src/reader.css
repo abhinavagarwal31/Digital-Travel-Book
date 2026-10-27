@@ -6,6 +6,12 @@
   --paper-ink: #2b241c;
   --paper-muted: #8b7f6f;
   --paper-accent: #a3492a;
+  /* Defaults; a theme overrides these on the stage (see lib/theme.ts). */
+  --cover-ink: #f6ead6;
+  --map-pin: var(--paper-accent);
+  --map-line: var(--paper-accent);
+  --font-body: var(--font-display);
+  --font-caption: var(--font-display);
   /* Page size: as large as the window allows, always 3:4. */
   --page-h: min(calc(100vh - 170px), calc((100vw - 96px) / 2 * 4 / 3));
   --page-w: calc(var(--page-h) * 3 / 4);
@@ -320,7 +326,7 @@
   background:
     linear-gradient(90deg, rgb(0 0 0 / 0.3) 0, rgb(255 255 255 / 0.1) 2.5%, transparent 6%),
     radial-gradient(120% 80% at 80% 0%, rgb(255 255 255 / 0.16), transparent 60%), var(--cover);
-  color: #f6ead6;
+  color: var(--cover-ink);
 }
 
 .back-cover {
@@ -380,14 +386,14 @@
   background:
     repeating-linear-gradient(0deg, transparent 0 5.8cqw, rgb(163 73 42 / 0.07) 5.8cqw 6cqw),
     repeating-linear-gradient(90deg, transparent 0 5.8cqw, rgb(163 73 42 / 0.07) 5.8cqw 6cqw),
-    #f3ead9;
+    color-mix(in srgb, var(--paper-page) 94%, var(--paper-accent));
 }
 
 .endpaper p {
   font-style: italic;
   font-size: 4cqw;
   color: var(--paper-muted);
-  background: #f3ead9;
+  background: color-mix(in srgb, var(--paper-page) 94%, var(--paper-accent));
   padding: 3cqw 5cqw;
   border-radius: 1cqw;
 }
@@ -519,7 +525,7 @@
 }
 
 .route-line {
-  stroke: var(--paper-accent);
+  stroke: var(--map-line);
   stroke-width: 4;
   stroke-linecap: round;
   stroke-dasharray: 0.5 11;
@@ -543,7 +549,7 @@
 }
 
 .route-pin circle {
-  fill: var(--paper-accent);
+  fill: var(--map-pin);
   stroke: #fffaf1;
   stroke-width: 3;
 }
@@ -639,6 +645,7 @@
 
 .page-photo figcaption,
 .day-caption {
+  font-family: var(--font-caption);
   font-style: italic;
   font-size: 2.6cqw;
   line-height: 1.35;
@@ -680,6 +687,7 @@
 }
 
 .diary-text {
+  font-family: var(--font-body);
   font-size: 3.3cqw;
   line-height: 1.55;
   color: var(--paper-ink);
@@ -697,4 +705,68 @@
   line-height: 0.85;
   padding: 0.06em 0.1em 0 0;
   color: var(--paper-accent);
+}
+
+/* ---------- Theme details ----------
+   Everything a theme changes arrives as CSS variables on .reader-stage; the
+   photo frame is the one choice that needs its own rules. */
+
+.reader-stage {
+  color: var(--paper-ink);
+}
+
+.page h1,
+.page h2 {
+  color: var(--paper-ink);
+}
+
+.cover-page h1 {
+  color: var(--cover-ink);
+}
+
+/* Plain: full-bleed, square corners, like a magazine. */
+[data-frame='plain'] .page img {
+  border-radius: 0;
+}
+
+/* Mounted: a thin cream border and a soft shadow, as if glued into an album. */
+[data-frame='mounted'] .page img {
+  padding: 0.9cqw;
+  background: #fffaf0;
+  border-radius: 0.4cqw;
+  box-shadow:
+    0 0.3cqw 1.2cqw rgb(60 40 20 / 0.18),
+    0 0 0 0.15cqw rgb(60 40 20 / 0.08);
+}
+
+/* Polaroid: a white card with a deep bottom edge, set a little askew. */
+[data-frame='polaroid'] .page img {
+  padding: 1.6cqw 1.6cqw 5cqw;
+  background: #fffdf8;
+  border-radius: 0.3cqw;
+  box-shadow: 0 0.5cqw 1.6cqw rgb(50 35 20 / 0.25);
+}
+
+[data-frame='polaroid'] .page-photo:nth-child(odd) img,
+[data-frame='polaroid'] .day-hero {
+  rotate: -1.4deg;
+}
+
+[data-frame='polaroid'] .page-photo:nth-child(even) img {
+  rotate: 1.6deg;
+}
+
+/* Handwritten captions read better upright and a size up. */
+[data-frame='polaroid'] .page-photo figcaption,
+[data-frame='polaroid'] .day-caption {
+  font-style: normal;
+  font-size: 3.4cqw;
+  text-align: center;
+}
+
+/* Kraft paper: a faint fibre texture. */
+[data-frame='polaroid'] .page:not(.cover-page) {
+  background:
+    repeating-linear-gradient(115deg, rgb(120 90 50 / 0.035) 0 0.3cqw, transparent 0.3cqw 1.1cqw),
+    var(--paper-page);
 }

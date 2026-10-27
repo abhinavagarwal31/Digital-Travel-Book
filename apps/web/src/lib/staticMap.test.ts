@@ -8,7 +8,7 @@ import {
   unwrapLongitudes,
 } from './staticMap.ts';
 
-const STYLE = MAP_STYLES.atlas;
+const STYLE = MAP_STYLES.stamen_watercolor;
 const TOKYO = { lat: 35.68, lng: 139.76 };
 const KYOTO = { lat: 35.01, lng: 135.77 };
 

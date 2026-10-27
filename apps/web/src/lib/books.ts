@@ -1,4 +1,4 @@
-import type { Book, CreateBookBody, UpdateBookBody } from '@tb/shared';
+import type { Book, CreateBookBody, ThemeId, UpdateBookBody } from '@tb/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from './api.ts';
 
@@ -49,6 +49,24 @@ export function useDeleteBook(id: string) {
     mutationFn: () => apiFetch<void>(`/books/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.removeQueries({ queryKey: bookKey(id) });
+      void queryClient.invalidateQueries({ queryKey: BOOKS_KEY, exact: true });
+    },
+  });
+}
+
+/** Picks a theme; the book moves to that theme's newest version. */
+export function useSetTheme(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (theme: ThemeId) =>
+      (
+        await apiFetch<{ book: Book }>(`/books/${id}/theme`, {
+          method: 'PUT',
+          json: { id: theme },
+        })
+      ).book,
+    onSuccess: (book) => {
+      queryClient.setQueryData(bookKey(id), book);
       void queryClient.invalidateQueries({ queryKey: BOOKS_KEY, exact: true });
     },
   });
