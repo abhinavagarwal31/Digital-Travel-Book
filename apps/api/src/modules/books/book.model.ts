@@ -22,6 +22,7 @@ export interface BookFields {
   overrides: {
     coverPhotoId: string | null;
     dayLayouts: { date: string; layout: PhotoLayout }[];
+    photoOrder: { date: string; photoIds: string[] }[];
   };
   organizedAt: Date | null;
   // "deleting" hides the book while its photos and images are being removed.
@@ -69,6 +70,10 @@ const bookSchema = new mongoose.Schema<BookFields>(
         ],
         default: [],
       },
+      photoOrder: {
+        type: [new mongoose.Schema({ date: String, photoIds: [String] }, { _id: false })],
+        default: [],
+      },
     },
     organizedAt: { type: Date, default: null },
     state: { type: String, enum: ['active', 'deleting'], default: 'active' },
@@ -100,6 +105,10 @@ export function toBookDTO(book: HydratedDocument<BookFields>): Book {
       dayLayouts: (book.overrides?.dayLayouts ?? []).map((d) => ({
         date: d.date,
         layout: d.layout,
+      })),
+      photoOrder: (book.overrides?.photoOrder ?? []).map((o) => ({
+        date: o.date,
+        photoIds: [...o.photoIds],
       })),
     },
     createdAt: book.createdAt.toISOString(),

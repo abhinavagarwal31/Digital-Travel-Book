@@ -5,6 +5,7 @@ import { scrapbookV1 } from '../themes/scrapbook.v1.ts';
 import {
   chunkSizes,
   composeBook as composeWith,
+  orderDayPhotos,
   type ComposableBook,
   type ComposablePhoto,
 } from './compose.ts';
@@ -21,7 +22,7 @@ const BOOK: ComposableBook = {
   startDate: '2026-10-10',
   days: [],
   chapters: [],
-  overrides: { coverPhotoId: null, dayLayouts: [] },
+  overrides: { coverPhotoId: null, dayLayouts: [], photoOrder: [] },
 };
 
 let nextId = 0;
@@ -435,5 +436,36 @@ describe("composeBook with the owner's choices", () => {
     // Scrapbook has no four-photo layout, so a day set to it falls back to the theme's.
     const fourUp = overrides({ dayLayouts: [{ date: '2026-10-11', layout: 'grid-4' }] });
     expect(sizes(fourUp, scrapbookV1)).toEqual([2, 2]);
+  });
+});
+
+describe("the owner's photo order", () => {
+  it('opens the day with the first arranged photo and keeps the rest in time after it', () => {
+    const a = photo('2026-10-10', '08:00:00');
+    const b = photo('2026-10-10', '09:00:00');
+    const c = photo('2026-10-10', '10:00:00');
+    const d = photo('2026-10-10', '11:00:00');
+    const book = {
+      ...BOOK,
+      overrides: {
+        ...BOOK.overrides,
+        photoOrder: [{ date: '2026-10-10', photoIds: [c.id, a.id] }],
+      },
+    };
+    const pages = composeBook(book, [a, b, c, d]);
+    expect(pages[3]).toMatchObject({
+      kind: 'day',
+      heroPhotoId: c.id,
+      timeRange: ['08:00', '11:00'],
+    });
+    expect(pages[4]).toMatchObject({ kind: 'photos', photoIds: [a.id, b.id, d.id] });
+  });
+
+  it('skips arranged photos that have left the day', () => {
+    const a = photo('2026-10-10', '08:00:00');
+    const b = photo('2026-10-10', '09:00:00');
+    const gone = photo('2026-10-11', '09:00:00');
+    expect(orderDayPhotos([a, b], [gone.id, b.id]).map((p) => p.id)).toEqual([b.id, a.id]);
+    expect(orderDayPhotos([a, b]).map((p) => p.id)).toEqual([a.id, b.id]);
   });
 });

@@ -77,7 +77,11 @@ describe('PUT /books/:id/cover', () => {
     const photoId = await addPhoto('2026-10-11');
     const res = await cover(photoId);
     expect(res.status).toBe(200);
-    expect(res.body.book.overrides).toEqual({ coverPhotoId: photoId, dayLayouts: [] });
+    expect(res.body.book.overrides).toEqual({
+      coverPhotoId: photoId,
+      dayLayouts: [],
+      photoOrder: [],
+    });
 
     expect((await cover(null)).body.book.overrides.coverPhotoId).toBeNull();
   });
@@ -145,6 +149,7 @@ describe('PUT /books/:id/day-layouts/:date', () => {
     expect(res.body.book.overrides).toEqual({
       coverPhotoId: null,
       dayLayouts: [{ date: '2026-10-11', layout: 'mosaic-3' }],
+      photoOrder: [],
     });
   });
 
@@ -152,6 +157,46 @@ describe('PUT /books/:id/day-layouts/:date', () => {
     await Promise.all([layout('2026-10-11', 'hero-1'), layout('2026-10-11', 'split-2')]);
     const stored = (await BookModel.findById(bookId))?.overrides.dayLayouts ?? [];
     expect(stored.filter((d) => d.date === '2026-10-11')).toHaveLength(1);
+  });
+});
+
+describe('PUT /books/:id/days/:date/photo-order', () => {
+  const order = (date: string, photoIds: string[], agent: Agent = asha) =>
+    agent.put(`/api/books/${bookId}/days/${date}/photo-order`).send({ photoIds });
+
+  it("saves and replaces a day's order", async () => {
+    const a = await addPhoto('2026-10-11');
+    const b = await addPhoto('2026-10-11');
+    expect((await order('2026-10-11', [b, a])).body.book.overrides.photoOrder).toEqual([
+      { date: '2026-10-11', photoIds: [b, a] },
+    ]);
+    expect((await order('2026-10-11', [a])).body.book.overrides.photoOrder).toEqual([
+      { date: '2026-10-11', photoIds: [a] },
+    ]);
+  });
+
+  it('accepts only finished photos of this book on that day, all or nothing', async () => {
+    const a = await addPhoto('2026-10-11');
+    const otherDay = await addPhoto('2026-10-12');
+    const pending = await addPhoto('2026-10-11', 'pending');
+    const otherBook = (await asha.post('/api/books').send(JAPAN)).body.book.id;
+    const elsewhere = await addPhoto('2026-10-11', 'ready', otherBook);
+    for (const ids of [
+      [a, otherDay],
+      [a, pending],
+      [a, elsewhere],
+    ]) {
+      expect((await order('2026-10-11', ids)).status).toBe(404);
+    }
+    expect((await order('2026-10-11', [a, a])).status).toBe(400);
+    expect((await order('2026-10-11', [])).status).toBe(400);
+    expect((await order('2026-11-30', [a])).status).toBe(400);
+    expect((await BookModel.findById(bookId))?.overrides.photoOrder).toHaveLength(0);
+  });
+
+  it("refuses another user's book", async () => {
+    const a = await addPhoto('2026-10-11');
+    expect((await order('2026-10-11', [a], ben)).status).toBe(404);
   });
 });
 

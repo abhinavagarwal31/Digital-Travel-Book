@@ -78,7 +78,7 @@ const shortDate = new Intl.DateTimeFormat('en-GB', {
   timeZone: 'UTC',
 });
 
-function chapterTitle(index: number, days: string[]): string {
+export function chapterTitle(index: number, days: string[]): string {
   const first = new Date(`${days[0]}T00:00:00Z`);
   const last = new Date(`${days.at(-1)}T00:00:00Z`);
   const range = days.length === 1 ? shortDate.format(first) : shortDate.formatRange(first, last);
@@ -117,4 +117,65 @@ export function proposeChapters(
     title: chapterTitle(i, g.days),
     dayDates: g.days,
   }));
+}
+
+/** A title the app wrote ("Chapter 2 · 12 – 15 Oct"), not one the user typed. */
+const AUTO_TITLE = /^Chapter \d+ · .+$/;
+
+/**
+ * Keeps the app's own titles true after chapters change shape: numbered in
+ * order and naming their dates. Titles the user typed are never touched.
+ */
+export function refreshAutoTitles(chapters: Chapter[]): Chapter[] {
+  return chapters.map((c, i) =>
+    AUTO_TITLE.test(c.title) && c.dayDates.length > 0
+      ? { ...c, title: chapterTitle(i, c.dayDates) }
+      : c,
+  );
+}
+
+/** An id like `c-2026-10-12`, made unique among the others if needed. */
+function freshId(base: string, chapters: Chapter[]): string {
+  const taken = new Set(chapters.map((c) => c.id));
+  let id = base;
+  for (let n = 2; taken.has(id); n++) id = `${base}-${n}`;
+  return id;
+}
+
+/** Starts a new chapter at `day`: it and the later days of its chapter move into it. */
+export function splitChapter(chapters: Chapter[], day: string): Chapter[] {
+  const at = chapters.findIndex((c) => c.dayDates.includes(day));
+  const chapter = chapters[at];
+  if (!chapter || chapter.dayDates[0] === day) return chapters;
+  const sorted = [...chapter.dayDates].sort();
+  const before = sorted.filter((d) => d < day);
+  const after = sorted.filter((d) => d >= day);
+  const created: Chapter = {
+    id: freshId(`c-${day}`, chapters),
+    title: chapterTitle(at + 1, after),
+    dayDates: after,
+  };
+  return refreshAutoTitles([
+    ...chapters.slice(0, at),
+    { ...chapter, dayDates: before },
+    created,
+    ...chapters.slice(at + 1),
+  ]);
+}
+
+/** Joins a chapter onto the one before it, which keeps its title. */
+export function mergeWithPrevious(chapters: Chapter[], chapterId: string): Chapter[] {
+  const at = chapters.findIndex((c) => c.id === chapterId);
+  const previous = chapters[at - 1];
+  const chapter = chapters[at];
+  if (!previous || !chapter) return chapters;
+  return refreshAutoTitles([
+    ...chapters.slice(0, at - 1),
+    { ...previous, dayDates: [...previous.dayDates, ...chapter.dayDates].sort() },
+    ...chapters.slice(at + 1),
+  ]);
+}
+
+export function renameChapter(chapters: Chapter[], chapterId: string, title: string): Chapter[] {
+  return chapters.map((c) => (c.id === chapterId ? { ...c, title } : c));
 }

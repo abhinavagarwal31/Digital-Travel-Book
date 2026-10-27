@@ -5,16 +5,19 @@ import {
   latestThemeVersion,
   setCoverBodySchema,
   setDayLayoutBodySchema,
+  setPhotoOrderBodySchema,
   setThemeBodySchema,
   tripRangeProblem,
   updateBookBodySchema,
   type CreateBookBody,
   type SetCoverBody,
   type SetDayLayoutBody,
+  type SetPhotoOrderBody,
   type SetThemeBody,
   type UpdateBookBody,
 } from '@tb/shared';
 import express, { type Router } from 'express';
+import type { HydratedDocument } from 'mongoose';
 import { AppError } from '../../lib/errors.ts';
 import { findOwned, notFound, pathParam } from '../../lib/ownership.ts';
 import { validateBody } from '../../lib/validate.ts';
@@ -24,7 +27,7 @@ import type { SessionConfig } from '../auth/session.ts';
 import { timeZoneAt } from '../../lib/timeZoneAt.ts';
 import { allowedDays, reorganize } from '../organize/organize.service.ts';
 import { bookStoragePrefix, PhotoModel } from '../photos/photo.model.ts';
-import { BookModel, toBookDTO } from './book.model.ts';
+import { BookModel, toBookDTO, type BookFields } from './book.model.ts';
 
 const ACTIVE = { state: 'active' as const };
 
@@ -128,48 +131,88 @@ export function createBooksRouter(config: BooksRouterConfig): Router {
     res.json({ book: toBookDTO(updated) });
   });
 
+  /** The date in the path, which must be one of the book's days (as for diaries). */
+  async function bookDay(req: express.Request, book: HydratedDocument<BookFields>, userId: string) {
+    const date = isoDateSchema.safeParse(pathParam(req, 'date'));
+    if (!date.success) throw notFound();
+    if (!(await allowedDays(book, userId)).has(date.data)) {
+      throw new AppError(400, 'VALIDATION_FAILED', 'That day is not part of this trip', [
+        { path: 'date', message: 'Not one of the book’s days' },
+      ]);
+    }
+    return date.data;
+  }
+
+  /**
+   * Replaces one day's entry in a per-day override list in a single atomic
+   * update: the old entry out, the new one (if any) in, kept in date order, so
+   * two saves for the same day can never leave two entries. Values go in as
+   * $literal so nothing in them is read as a field or operator.
+   */
+  async function setDayEntry(
+    book: HydratedDocument<BookFields>,
+    userId: string,
+    field: 'overrides.dayLayouts' | 'overrides.photoOrder',
+    date: string,
+    entry: Record<string, unknown> | null,
+  ) {
+    const others = {
+      $filter: {
+        input: { $ifNull: [`$${field}`, []] },
+        cond: { $ne: ['$$this.date', date] },
+      },
+    };
+    const literal = entry && {
+      date: { $literal: date },
+      ...Object.fromEntries(Object.entries(entry).map(([k, v]) => [k, { $literal: v }])),
+    };
+    const entries = literal ? { $concatArrays: [others, [literal]] } : others;
+    const updated = await BookModel.findOneAndUpdate(
+      { _id: book._id, userId, ...ACTIVE },
+      [{ $set: { [field]: { $sortArray: { input: entries, sortBy: { date: 1 } } } } }],
+      { returnDocument: 'after', updatePipeline: true },
+    );
+    if (!updated) throw notFound();
+    return updated;
+  }
+
   router.put(
     '/:bookId/day-layouts/:date',
     validateBody(setDayLayoutBodySchema),
     async (req, res) => {
       const userId = authUserId(req);
       const book = await findOwned(BookModel, pathParam(req, 'bookId'), userId, ACTIVE);
-      const date = isoDateSchema.safeParse(pathParam(req, 'date'));
-      if (!date.success) throw notFound();
-      if (!(await allowedDays(book, userId)).has(date.data)) {
-        throw new AppError(400, 'VALIDATION_FAILED', 'That day is not part of this trip', [
-          { path: 'date', message: 'Not one of the book’s days' },
-        ]);
-      }
-
-      // One atomic update, as for diaries: the day's old choice out, the new one in.
+      const date = await bookDay(req, book, userId);
       const { layout } = req.body as SetDayLayoutBody;
-      const others = {
-        $filter: {
-          input: { $ifNull: ['$overrides.dayLayouts', []] },
-          cond: { $ne: ['$$this.date', date.data] },
-        },
-      };
-      const entries = layout
-        ? {
-            $concatArrays: [
-              others,
-              [{ date: { $literal: date.data }, layout: { $literal: layout } }],
-            ],
-          }
-        : others;
-      const updated = await BookModel.findOneAndUpdate(
-        { _id: book._id, userId, ...ACTIVE },
-        [
-          {
-            $set: {
-              'overrides.dayLayouts': { $sortArray: { input: entries, sortBy: { date: 1 } } },
-            },
-          },
-        ],
-        { returnDocument: 'after', updatePipeline: true },
+      const updated = await setDayEntry(
+        book,
+        userId,
+        'overrides.dayLayouts',
+        date,
+        layout && { layout },
       );
-      if (!updated) throw notFound();
+      res.json({ book: toBookDTO(updated) });
+    },
+  );
+
+  // Every listed photo must be a finished photo of this book on that day: all or nothing.
+  router.put(
+    '/:bookId/days/:date/photo-order',
+    validateBody(setPhotoOrderBodySchema),
+    async (req, res) => {
+      const userId = authUserId(req);
+      const book = await findOwned(BookModel, pathParam(req, 'bookId'), userId, ACTIVE);
+      const date = await bookDay(req, book, userId);
+      const { photoIds } = req.body as SetPhotoOrderBody;
+      const found = await PhotoModel.countDocuments({
+        _id: { $in: photoIds },
+        userId,
+        bookId: book._id,
+        status: 'ready',
+        dayDate: date,
+      });
+      if (found !== photoIds.length) throw notFound();
+      const updated = await setDayEntry(book, userId, 'overrides.photoOrder', date, { photoIds });
       res.json({ book: toBookDTO(updated) });
     },
   );

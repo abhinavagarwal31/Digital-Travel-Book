@@ -39,7 +39,7 @@ describe('creating and reading books', () => {
       days: [],
       chapters: [],
       chaptersEdited: false,
-      overrides: { coverPhotoId: null, dayLayouts: [] },
+      overrides: { coverPhotoId: null, dayLayouts: [], photoOrder: [] },
       createdAt: expect.any(String),
       updatedAt: expect.any(String),
     });

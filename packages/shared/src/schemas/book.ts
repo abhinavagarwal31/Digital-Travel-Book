@@ -75,6 +75,7 @@ export const bookSchema = z.object({
   overrides: z.object({
     coverPhotoId: z.string().nullable(),
     dayLayouts: z.array(z.object({ date: z.string(), layout: z.enum(PHOTO_LAYOUTS) })),
+    photoOrder: z.array(z.object({ date: z.string(), photoIds: z.array(z.string()) })),
   }),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -86,6 +87,15 @@ export const setCoverBodySchema = z.strictObject({ photoId: objectIdSchema.nulla
 /** A day's photo layout, or null to follow the theme. */
 export const setDayLayoutBodySchema = z.strictObject({ layout: z.enum(PHOTO_LAYOUTS).nullable() });
 
+/** A day's photos in the owner's order; the first opens the day. */
+export const setPhotoOrderBodySchema = z.strictObject({
+  photoIds: z
+    .array(objectIdSchema)
+    .min(1)
+    .max(500)
+    .refine((ids) => new Set(ids).size === ids.length, 'A photo is listed twice'),
+});
+
 /** Choosing a theme always picks its newest version. */
 export const setThemeBodySchema = z.strictObject({ id: z.enum(THEME_IDS) });
 
@@ -95,3 +105,4 @@ export type Book = z.infer<typeof bookSchema>;
 export type SetThemeBody = z.infer<typeof setThemeBodySchema>;
 export type SetCoverBody = z.infer<typeof setCoverBodySchema>;
 export type SetDayLayoutBody = z.infer<typeof setDayLayoutBodySchema>;
+export type SetPhotoOrderBody = z.infer<typeof setPhotoOrderBodySchema>;

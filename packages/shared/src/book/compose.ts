@@ -75,6 +75,8 @@ export interface ComposableBook {
   overrides: {
     coverPhotoId: string | null;
     dayLayouts: { date: string; layout: PhotoLayout }[];
+    /** The owner's order for a day's photos; the first is the day's opening photo. */
+    photoOrder: { date: string; photoIds: string[] }[];
   };
 }
 
@@ -98,13 +100,26 @@ export function chunkSizes(count: number, max = 4): number[] {
 const AFTER_ANY_TIME = '\uffff';
 const clock = (localDateTime: string) => localDateTime.slice(11, 16);
 
-/** A day's photos in reading order: by local time, untimed last, ties by id. */
-function inTimeOrder(photos: ComposablePhoto[]): ComposablePhoto[] {
-  return [...photos].sort(
+/**
+ * A day's photos in reading order: first those the owner arranged, in their
+ * order, then the rest by local time (untimed last, ties by id). Ids in the
+ * arrangement that are no longer on this day are skipped, so a photo moved
+ * away, hidden or deleted never leaves a gap.
+ */
+export function orderDayPhotos<P extends { id: string; localDateTime: string | null }>(
+  photos: P[],
+  arranged: readonly string[] = [],
+): P[] {
+  const byTime = [...photos].sort(
     (a, b) =>
       (a.localDateTime ?? AFTER_ANY_TIME).localeCompare(b.localDateTime ?? AFTER_ANY_TIME) ||
       a.id.localeCompare(b.id),
   );
+  const rank = new Map(arranged.map((id, i) => [id, i]));
+  const placed = byTime
+    .filter((p) => rank.has(p.id))
+    .sort((a, b) => (rank.get(a.id) as number) - (rank.get(b.id) as number));
+  return [...placed, ...byTime.filter((p) => !rank.has(p.id))];
 }
 
 /**
@@ -118,9 +133,10 @@ function dayPages(
   photos: ComposablePhoto[],
   diary: string,
   perPage: number,
+  arranged: readonly string[],
 ): BookPage[] {
   const dayNumber = tripLengthDays(book.startDate, dayDate);
-  const [hero, ...rest] = inTimeOrder(photos);
+  const [hero, ...rest] = orderDayPhotos(photos, arranged);
   const pages: BookPage[] = [];
   if (hero) {
     const times = photos.flatMap((p) => (p.localDateTime ? [clock(p.localDateTime)] : [])).sort();
@@ -178,6 +194,7 @@ export function composeBook(
   const dayLayouts = new Map(
     book.overrides.dayLayouts.filter((d) => allowed.has(d.layout)).map((d) => [d.date, d.layout]),
   );
+  const arrangements = new Map(book.overrides.photoOrder.map((o) => [o.date, o.photoIds]));
   const perPage = (dayDate: string) =>
     LAYOUT_CAPACITY[dayLayouts.get(dayDate) ?? theme.photos.defaultLayout];
   const inBook = photos.filter((p) => p.status === 'ready' && !p.hidden && p.dayDate);
@@ -271,7 +288,14 @@ export function composeBook(
       const dayPhotos = byDay.get(dayDate) ?? [];
       photoCount += dayPhotos.length;
       pages.push(
-        ...dayPages(book, dayDate, dayPhotos, diaries.get(dayDate) ?? '', perPage(dayDate)),
+        ...dayPages(
+          book,
+          dayDate,
+          dayPhotos,
+          diaries.get(dayDate) ?? '',
+          perPage(dayDate),
+          arrangements.get(dayDate) ?? [],
+        ),
       );
     }
   }

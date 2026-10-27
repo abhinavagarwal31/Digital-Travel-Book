@@ -36,7 +36,10 @@ function photo(id: string, changes: Partial<Photo> = {}): Photo {
 }
 
 function open(path: string, book: object, photos: Photo[]) {
-  const withCover = { ...JAPAN_BOOK, overrides: { coverPhotoId: 'b', dayLayouts: [] } };
+  const withCover = {
+    ...JAPAN_BOOK,
+    overrides: { coverPhotoId: 'b', dayLayouts: [], photoOrder: [] },
+  };
   const calls = mockApi({
     'GET /auth/me': { status: 200, body: { user: ASHA } },
     [`GET /books/${BOOK}`]: { status: 200, body: { book } },
@@ -95,7 +98,11 @@ it("offers only the theme's layouts for a day, with the style's own as the defau
 it('shows a saved layout the theme no longer offers as the default', async () => {
   const book = {
     ...JAPAN_BOOK,
-    overrides: { coverPhotoId: null, dayLayouts: [{ date: '2026-10-11', layout: 'grid-4' }] },
+    overrides: {
+      coverPhotoId: null,
+      dayLayouts: [{ date: '2026-10-11', layout: 'grid-4' }],
+      photoOrder: [],
+    },
   };
   open(`/books/${BOOK}/write`, book, [photo('a'), photo('b')]);
   const select = (await screen.findByRole('combobox', {
@@ -111,7 +118,7 @@ it('prints the chosen photo on the cover of the book', async () => {
     addEventListener: () => {},
     removeEventListener: () => {},
   }));
-  const book = { ...JAPAN_BOOK, overrides: { coverPhotoId: 'b', dayLayouts: [] } };
+  const book = { ...JAPAN_BOOK, overrides: { coverPhotoId: 'b', dayLayouts: [], photoOrder: [] } };
   open(`/books/${BOOK}/read`, book, [photo('a'), photo('b')]);
   await screen.findByRole('heading', { name: JAPAN_BOOK.title, level: 1 });
   const cover = document.querySelector('.cover-page.with-photo .cover-photo');

@@ -1519,3 +1519,73 @@ textarea[aria-invalid='true'] {
   border-radius: 999px;
   padding: 0.3rem 0.8rem;
 }
+
+/* ---------- Chapters and photo order on the Write page ---------- */
+
+.write-chapters {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2.5rem;
+}
+
+.write-chapter {
+  display: grid;
+  gap: 1rem;
+}
+
+.write-chapter-head {
+  display: grid;
+  gap: 0.35rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid var(--line);
+}
+
+.write-chapter-title input {
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 1.1rem + 1vw, 1.9rem);
+  font-weight: 600;
+  padding: 0.25rem 0.1rem;
+  border: 0;
+  border-bottom: 1px dashed transparent;
+  border-radius: 0;
+  background: transparent;
+}
+
+.write-chapter-title input:hover,
+.write-chapter-title input:focus {
+  border-bottom-color: var(--line);
+}
+
+.write-chapter-head .link-button {
+  justify-self: start;
+  font-size: 0.85rem;
+}
+
+.write-split {
+  justify-self: start;
+  font-size: 0.82rem;
+  margin-top: -0.3rem;
+}
+
+.write-photo-frame {
+  position: relative;
+}
+
+.write-opener {
+  position: absolute;
+  top: 0.45rem;
+  left: 0.45rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: rgb(20 16 12 / 0.72);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.write-order {
+  display: flex;
+  gap: 0.4rem;
+}
