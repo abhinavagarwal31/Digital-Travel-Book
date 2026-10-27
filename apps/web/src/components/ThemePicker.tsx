@@ -1,12 +1,14 @@
 import { PRESET_THEMES, resolveTheme, type Book, type ThemeId } from '@tb/shared';
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { useSetTheme } from '../lib/books.ts';
 import { themeStyle } from '../lib/theme.ts';
 
 /**
- * The three book styles as cards, each a tiny page drawn with the theme's own
+ * The book styles as cards, each a tiny page drawn with the theme's own
  * colours, fonts and photo frame. A native radio group: arrow keys move
- * between styles and choosing one saves it straight away.
+ * between styles and choosing one saves it straight away. Last, the style
+ * Pro will design with AI: shown locked, leading to the plans page.
  */
 export function ThemePicker({ book }: { book: Book }) {
   const setTheme = useSetTheme(book.id);
@@ -57,6 +59,21 @@ export function ThemePicker({ book }: { book: Book }) {
             </span>
           </label>
         ))}
+        <Link to="/plans" className="theme-card theme-card-ai">
+          <span className="theme-preview ai-preview" aria-hidden="true">
+            <span className="ai-sparkles">✦ ✧ ✦</span>
+            <span className="ai-prompt">“Monsoon in Kerala, soft greens, handwritten”</span>
+            <span className="ai-lock">🔒</span>
+          </span>
+          <span className="theme-card-text">
+            <strong>
+              Design with AI <span className="plan-badge">Pro</span>
+            </strong>
+            <span className="muted">
+              Describe a mood and get a style made for this trip. Coming with Pro: see plans.
+            </span>
+          </span>
+        </Link>
       </fieldset>
       {setTheme.isError && (
         <p role="alert" className="form-error">

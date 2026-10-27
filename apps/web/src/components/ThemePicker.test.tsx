@@ -32,6 +32,9 @@ it('offers every style with the current one chosen, and saves a new choice', asy
     'editorial',
     'scrapbook',
     'comic',
+    'postcard',
+    'midnight',
+    'pastel',
   ]);
   expect(within(group).getByRole('radio', { name: /Minimal Editorial/ })).toHaveProperty(
     'checked',
@@ -54,4 +57,11 @@ it('tells the owner when their style version is no longer available', async () =
   expect(
     await screen.findByText(/Illustrated Atlas, version 9\) is no longer available/),
   ).toBeTruthy();
+});
+
+it('shows the AI style as a Pro feature, leading to the plans', async () => {
+  bookPage();
+  const card = await screen.findByRole('link', { name: /Design with AI/ });
+  expect(card.getAttribute('href')).toBe('/plans');
+  expect(card.textContent).toContain('Pro');
 });

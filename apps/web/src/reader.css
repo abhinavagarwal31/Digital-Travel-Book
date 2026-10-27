@@ -367,10 +367,13 @@
 
 .face.front > .page:not(.cover-page)::before {
   background: linear-gradient(90deg, transparent 3%, rgb(255 252 244 / 0.35) 9%, transparent 18%);
+  /* Soft light lifts any paper colour a little, light or dark. */
+  mix-blend-mode: soft-light;
 }
 
 .face.back > .page:not(.cover-page)::before {
   background: linear-gradient(270deg, transparent 3%, rgb(255 252 244 / 0.35) 9%, transparent 18%);
+  mix-blend-mode: soft-light;
 }
 
 /* Covers are boards, not paper: no fold shading, no paper grain. */
@@ -543,7 +546,8 @@
   font-size: 3.6cqw;
   font-style: italic;
   line-height: 1.45;
-  color: #574b3d;
+  /* Between ink and paper, so it reads on light and dark pages alike. */
+  color: color-mix(in srgb, var(--paper-ink) 78%, var(--paper-page));
 }
 
 .day-page h2 {
@@ -807,7 +811,8 @@
   font-style: italic;
   font-size: 2.6cqw;
   line-height: 1.35;
-  color: #574b3d;
+  /* Between ink and paper, so it reads on light and dark pages alike. */
+  color: color-mix(in srgb, var(--paper-ink) 78%, var(--paper-page));
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -1461,4 +1466,54 @@
 
 .reader-stage[data-look='comic'] .face.revealing .page-photo figcaption {
   animation-delay: 1000ms;
+}
+
+/* ---------- Three more photo frames ---------- */
+
+/* Postcard: a cream border with a stamp-like perforated edge, printed in sepia. */
+[data-frame='postcard'] .page:not(.cover-page) img {
+  padding: 1.3cqw;
+  background: #fbf6ea;
+  border-radius: 0.3cqw;
+  outline: 0.45cqw dashed color-mix(in srgb, var(--paper-accent) 55%, transparent);
+  outline-offset: -0.7cqw;
+  box-shadow: 0 0.5cqw 1.4cqw rgb(60 40 20 / 0.22);
+  filter: sepia(0.38) saturate(0.9) contrast(1.04);
+}
+
+[data-frame='postcard'] .page-photo:nth-child(even) img {
+  rotate: 1deg;
+}
+
+[data-frame='postcard'] .page-photo:nth-child(odd) img,
+[data-frame='postcard'] .day-hero {
+  rotate: -0.8deg;
+}
+
+/* Gilded: a fine gold rule around the photo, as in a frame on a dark wall. */
+[data-frame='gilded'] .page:not(.cover-page) img {
+  padding: 0.5cqw;
+  background: linear-gradient(135deg, #f3d89a, #b98a36 45%, #f6e2a8 70%, #a77a2c);
+  border-radius: 0.2cqw;
+  box-shadow:
+    0 0.8cqw 2cqw rgb(0 0 0 / 0.5),
+    0 0 0 0.25cqw rgb(0 0 0 / 0.35);
+}
+
+/* Rounded: soft corners and a gentle floating shadow. */
+[data-frame='rounded'] .page:not(.cover-page) img {
+  border-radius: 3cqw;
+  box-shadow: 0 1.2cqw 3cqw rgb(120 80 110 / 0.22);
+}
+
+/* Postcard headings in typewriter type sit a little tighter. */
+.reader-stage[data-frame='postcard'] .page h1,
+.reader-stage[data-frame='postcard'] .page h2 {
+  letter-spacing: -0.01em;
+}
+
+/* Fibres darken the paper they lie on, whatever its colour: subtle on cream,
+   and no pale streaks on a dark page like Midnight's. */
+.reader-stage:not([data-look='comic']) .face {
+  background-blend-mode: multiply, normal, normal;
 }

@@ -32,6 +32,11 @@ export const MAP_STYLES: Record<MapTileStyle, TileStyle> = {
     attribution: `© Stadia Maps © Stamen Design ${OSM}`,
   },
   alidade_smooth: { path: 'alidade_smooth', ext: 'png', attribution: `© Stadia Maps ${OSM}` },
+  alidade_smooth_dark: {
+    path: 'alidade_smooth_dark',
+    ext: 'png',
+    attribution: `© Stadia Maps ${OSM}`,
+  },
 };
 
 export const tileUrl = (style: TileStyle, z: number, x: number, y: number) =>

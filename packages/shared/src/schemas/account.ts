@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, userSchema } from './auth.ts';
+import { THEME_IDS } from './book.ts';
 import { MAX_PHOTOS_PER_BOOK } from './photo.ts';
 
 export const PLAN_IDS = ['free', 'pro'] as const;
@@ -27,7 +28,7 @@ export const PLANS: Record<PlanId, Plan> = {
       'Unlimited travel books',
       'Automatic days, chapters and route maps',
       'Captions, diary and chapter names',
-      'All four book styles, including Comic Adventure',
+      `All ${THEME_IDS.length} book styles, including Comic Adventure`,
       'The page-turning reader, on any device',
     ],
   },

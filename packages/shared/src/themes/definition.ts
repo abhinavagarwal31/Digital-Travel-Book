@@ -14,14 +14,24 @@ export const THEME_FONTS = [
   'caveat',
   'bangers',
   'comic-neue',
+  'special-elite',
 ] as const;
 export const MAP_TILE_STYLES = [
   'stamen_watercolor',
   'stamen_toner_lite',
   'alidade_smooth',
+  'alidade_smooth_dark',
 ] as const;
 /** How photos sit on the page: bare, mounted with a border, as polaroids, or as inked comic panels. */
-export const PHOTO_FRAMES = ['plain', 'mounted', 'polaroid', 'panel'] as const;
+export const PHOTO_FRAMES = [
+  'plain',
+  'mounted',
+  'polaroid',
+  'panel',
+  'postcard',
+  'gilded',
+  'rounded',
+] as const;
 /**
  * The book's whole make: a classic bound book, or a comic (newsprint, inked
  * panels, lettered captions, a soft binding). Absent means classic, so themes

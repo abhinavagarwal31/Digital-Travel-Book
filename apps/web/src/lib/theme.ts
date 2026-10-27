@@ -9,6 +9,7 @@ export const FONT_STACKS: Record<ThemeFont, string> = {
   caveat: "'Caveat Variable', 'Bradley Hand', cursive",
   bangers: "'Bangers', Impact, 'Arial Black', sans-serif",
   'comic-neue': "'Comic Neue', 'Comic Sans MS', 'Chalkboard SE', sans-serif",
+  'special-elite': "'Special Elite', 'American Typewriter', 'Courier New', monospace",
 };
 
 /**

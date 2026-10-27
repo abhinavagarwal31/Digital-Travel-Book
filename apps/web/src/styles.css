@@ -2259,3 +2259,60 @@ textarea[aria-invalid='true'] {
 .sort-tray .sort-chips {
   margin-top: 0.8rem;
 }
+
+.theme-preview[data-frame='postcard'] .theme-preview-photo {
+  border: 1.6cqw solid #fbf6ea;
+  outline: 0.5cqw dashed #b5452b88;
+  outline-offset: -1.4cqw;
+  filter: sepia(0.4);
+  rotate: -1.5deg;
+}
+
+.theme-preview[data-frame='gilded'] .theme-preview-photo {
+  border: 1cqw solid #d4a94f;
+  box-shadow: 0 1cqw 3cqw rgb(0 0 0 / 0.5);
+}
+
+.theme-preview[data-frame='rounded'] .theme-preview-photo {
+  border-radius: 4cqw;
+  box-shadow: 0 1.5cqw 3cqw rgb(120 80 110 / 0.25);
+}
+
+/* The locked AI style: a dreamy preview with a lock, linking to the plans. */
+.theme-card-ai {
+  text-decoration: none;
+  color: inherit;
+  border-style: dashed;
+}
+
+.ai-preview {
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  gap: 3cqw;
+  text-align: center;
+  background:
+    radial-gradient(60% 70% at 25% 30%, #ffd6e8, transparent 70%),
+    radial-gradient(60% 70% at 80% 70%, #c9e4ff, transparent 70%),
+    radial-gradient(50% 60% at 70% 20%, #e3d4ff, transparent 70%), #fff8f2;
+  color: #4b3f63;
+}
+
+.ai-sparkles {
+  font-size: 9cqw;
+  letter-spacing: 0.3em;
+  color: #9a7fd1;
+}
+
+.ai-prompt {
+  font: italic 4.6cqw var(--font-display);
+  max-width: 85%;
+}
+
+.ai-lock {
+  position: absolute;
+  top: 4cqw;
+  right: 4cqw;
+  font-size: 6cqw;
+  filter: grayscale(0.2);
+}
