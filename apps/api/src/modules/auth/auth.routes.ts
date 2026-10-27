@@ -41,7 +41,7 @@ export function createAuthRouter(config: AuthRouterConfig): Router {
     const passwordHash = await hashPassword(password);
     try {
       const user = await UserModel.create({ name, email, passwordHash });
-      issueSession(res, user.id, config);
+      issueSession(res, user.id, config, user.sessionVersion);
       res.status(201).json({ user: toUserDTO(user) });
     } catch (err) {
       if (isDuplicateKeyError(err)) {
@@ -59,7 +59,7 @@ export function createAuthRouter(config: AuthRouterConfig): Router {
     if (!user || !valid) {
       throw new AppError(401, 'INVALID_CREDENTIALS', 'Email or password is incorrect');
     }
-    issueSession(res, user.id, config);
+    issueSession(res, user.id, config, user.sessionVersion ?? 0);
     res.json({ user: toUserDTO(user) });
   });
 

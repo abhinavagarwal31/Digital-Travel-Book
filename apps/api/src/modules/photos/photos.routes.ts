@@ -1,7 +1,8 @@
 import {
   captureFields,
   confirmUploadBodySchema,
-  MAX_PHOTOS_PER_BOOK,
+  photoLimit,
+  PLANS,
   MAX_UPLOAD_BYTES,
   uploadIntentBodySchema,
   type ConfirmUploadBody,
@@ -25,6 +26,7 @@ import { timeZoneAt } from '../../lib/timeZoneAt.ts';
 import { validateBody } from '../../lib/validate.ts';
 import { authUserId, requireAuth } from '../auth/requireAuth.ts';
 import type { SessionConfig } from '../auth/session.ts';
+import { UserModel } from '../auth/user.model.ts';
 import { BookModel } from '../books/book.model.ts';
 import { readExif, sniffImageType } from './metadata.ts';
 import { bookStoragePrefix, PhotoModel, toPhotoDTO, type PhotoFields } from './photo.model.ts';
@@ -84,12 +86,16 @@ export function createPhotosRouter(config: PhotosRouterConfig): Router {
         bookId: book._id,
         status: { $ne: 'deleting' },
       });
-      if (current + newFiles > MAX_PHOTOS_PER_BOOK) {
+      // The plan's allowance per book, never above the cap every book shares.
+      const owner = await UserModel.findById(userId).select('plan');
+      const plan = owner?.plan ?? 'free';
+      const limit = photoLimit(plan);
+      if (current + newFiles > limit) {
         throw new AppError(
           409,
           'PHOTO_LIMIT',
-          `A book can hold at most ${MAX_PHOTOS_PER_BOOK} photos`,
-          { remaining: Math.max(0, MAX_PHOTOS_PER_BOOK - current) },
+          `On the ${PLANS[plan].name} plan a book holds up to ${limit} photos`,
+          { remaining: Math.max(0, limit - current), limit },
         );
       }
 

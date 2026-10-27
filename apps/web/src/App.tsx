@@ -4,12 +4,14 @@ import { Layout } from './components/Layout.tsx';
 import { Loading } from './components/LoadState.tsx';
 import { RequireAuth } from './components/RequireAuth.tsx';
 import { useCurrentUser } from './lib/auth.ts';
+import { AccountPage } from './pages/AccountPage.tsx';
 import { AuthPage } from './pages/AuthPage.tsx';
 import { BookPage } from './pages/BookPage.tsx';
 import { LandingPage } from './pages/LandingPage.tsx';
 import { LibraryPage } from './pages/LibraryPage.tsx';
 import { NewBookPage } from './pages/NewBookPage.tsx';
 import { NotFoundPage } from './pages/NotFoundPage.tsx';
+import { PlansPage } from './pages/PlansPage.tsx';
 import { ReaderPage } from './pages/ReaderPage.tsx';
 import { SortPage } from './pages/SortPage.tsx';
 import { WritePage } from './pages/WritePage.tsx';
@@ -90,6 +92,15 @@ export function App() {
               </RequireAuth>
             }
           />
+          <Route
+            path="/account"
+            element={
+              <RequireAuth>
+                <AccountPage />
+              </RequireAuth>
+            }
+          />
+          <Route path="/plans" element={<PlansPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>

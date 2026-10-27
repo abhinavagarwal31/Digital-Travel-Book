@@ -1,17 +1,23 @@
 import type { Request, RequestHandler } from 'express';
 import { AppError } from '../../lib/errors.ts';
-import { clearSession, readSessionUserId, SESSION_COOKIE, type SessionConfig } from './session.ts';
+import { clearSession, readSession, SESSION_COOKIE, type SessionConfig } from './session.ts';
 import { UserModel } from './user.model.ts';
 
 /**
- * Lets a request through only with a valid session for a user that still exists.
- * A bad or stale cookie is cleared so the browser stops sending it.
+ * Lets a request through only with a valid session for a user that still
+ * exists, from the user's current session version (an older one was signed
+ * out). A bad or stale cookie is cleared so the browser stops sending it.
  */
 export function requireAuth(config: SessionConfig): RequestHandler {
   return async (req, res, next) => {
-    const userId = readSessionUserId(req, config);
-    if (userId && (await UserModel.exists({ _id: userId }))) {
-      req.userId = userId;
+    const session = readSession(req, config);
+    // Accounts made before versions existed have none stored: that is version 0.
+    const current =
+      session?.version === 0
+        ? { $or: [{ sessionVersion: 0 }, { sessionVersion: { $exists: false } }] }
+        : { sessionVersion: session?.version };
+    if (session && (await UserModel.exists({ _id: session.userId, ...current }))) {
+      req.userId = session.userId;
       next();
       return;
     }

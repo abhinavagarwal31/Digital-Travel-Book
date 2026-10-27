@@ -8,6 +8,7 @@ import { apiNotFound, errorHandler } from './lib/errors.ts';
 import { requireJsonForWrites } from './lib/requireJson.ts';
 import type { ImageStorage } from './lib/storage.ts';
 import { serveWebApp } from './lib/webApp.ts';
+import { createAccountRouter } from './modules/account/account.routes.ts';
 import { createAuthRouter, type AuthRateLimit } from './modules/auth/auth.routes.ts';
 import { createBooksRouter } from './modules/books/books.routes.ts';
 import { createJournalRouter } from './modules/journal/journal.routes.ts';
@@ -73,6 +74,13 @@ export function createApp(config: AppConfig): express.Express {
     storage: config.storage ?? null,
     storageNamespace: config.storageNamespace ?? 'development',
   };
+  api.use(
+    '/account',
+    createAccountRouter({
+      ...storageConfig,
+      authRateLimit: config.authRateLimit ?? DEFAULT_AUTH_RATE_LIMIT,
+    }),
+  );
   api.use('/books', createBooksRouter(storageConfig));
   api.use(createPhotosRouter(storageConfig));
   api.use(createOrganizeRouter(config));

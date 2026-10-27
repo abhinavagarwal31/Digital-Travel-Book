@@ -26,8 +26,9 @@ import type { ImageStorage } from '../../lib/storage.ts';
 import type { SessionConfig } from '../auth/session.ts';
 import { timeZoneAt } from '../../lib/timeZoneAt.ts';
 import { allowedDays, reorganize } from '../organize/organize.service.ts';
-import { bookStoragePrefix, PhotoModel } from '../photos/photo.model.ts';
+import { PhotoModel } from '../photos/photo.model.ts';
 import { BookModel, toBookDTO, type BookFields } from './book.model.ts';
+import { deleteBook } from './book.service.ts';
 
 const ACTIVE = { state: 'active' as const };
 
@@ -218,29 +219,8 @@ export function createBooksRouter(config: BooksRouterConfig): Router {
   );
 
   router.delete('/:bookId', async (req, res) => {
-    const userId = authUserId(req);
-    const book = await findOwned(BookModel, pathParam(req, 'bookId'), userId, ACTIVE);
-
-    // Hide the book and its photos at once; their hashes are cleared so nothing blocks re-uploads.
-    await BookModel.updateOne({ _id: book._id, userId }, { $set: { state: 'deleting' } });
-    await PhotoModel.updateMany(
-      { bookId: book._id },
-      { $set: { status: 'deleting' }, $unset: { contentHash: 1 } },
-    );
-
-    // Remove the images and photo records now. The book record itself stays in
-    // "deleting" until the sweeper's final pass, an hour later, catches any upload
-    // that was still in flight. A storage outage here just leaves more for that pass.
-    if (config.storage) {
-      try {
-        await config.storage.destroyPrefix(
-          bookStoragePrefix(config.storageNamespace, userId, book.id),
-        );
-        await PhotoModel.deleteMany({ bookId: book._id });
-      } catch {
-        // Left for the sweeper.
-      }
-    }
+    const book = await findOwned(BookModel, pathParam(req, 'bookId'), authUserId(req), ACTIVE);
+    await deleteBook(book, config.storage, config.storageNamespace);
     res.status(204).end();
   });
 

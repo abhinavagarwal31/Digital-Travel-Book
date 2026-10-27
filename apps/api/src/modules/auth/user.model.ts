@@ -1,11 +1,13 @@
-import type { User } from '@tb/shared';
+import { PLAN_IDS, type PlanId, type User } from '@tb/shared';
 import mongoose, { type HydratedDocument } from 'mongoose';
 
 export interface UserFields {
   email: string;
   name: string;
   passwordHash: string;
-  plan: 'free';
+  plan: PlanId;
+  /** Bumped to sign out every existing session (password change, "log out other devices"). */
+  sessionVersion: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -16,8 +18,9 @@ const userSchema = new mongoose.Schema<UserFields>(
     name: { type: String, required: true, trim: true },
     // Excluded from queries unless asked for with .select('+passwordHash').
     passwordHash: { type: String, required: true, select: false },
-    // Pro hook: stored only, nothing in the MVP reads it.
-    plan: { type: String, enum: ['free'], default: 'free' },
+    // Decides the photo limit per book; there is no way to buy Pro yet.
+    plan: { type: String, enum: PLAN_IDS, default: 'free' },
+    sessionVersion: { type: Number, default: 0 },
   },
   { timestamps: true },
 );

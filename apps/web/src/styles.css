@@ -1983,3 +1983,188 @@ textarea[aria-invalid='true'] {
   font-style: normal;
   font-weight: 700;
 }
+
+/* ---------- Account and plans ---------- */
+
+.header-link {
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 500;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-sm);
+}
+
+.header-link:hover,
+.header-link:focus-visible {
+  color: var(--ink);
+}
+
+.account-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.25rem 0.75rem 0.25rem 0.25rem;
+  border-radius: 999px;
+  text-decoration: none;
+  transition: background 150ms;
+}
+
+.account-link:hover,
+.account-link:focus-visible {
+  background: var(--surface-sunk);
+}
+
+.account-page {
+  max-width: 52rem;
+  margin: 0 auto;
+}
+
+.account-hero {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.avatar.large {
+  width: 4.5rem;
+  height: 4.5rem;
+  font-size: 1.6rem;
+}
+
+.plan-badge {
+  display: inline-block;
+  padding: 0.15rem 0.7rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font: 600 0.85rem var(--font-ui);
+  vertical-align: middle;
+}
+
+.plan-badge.soon {
+  background: var(--surface-sunk);
+  color: var(--muted);
+}
+
+.usage {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 1rem;
+  margin: 0;
+}
+
+.usage dt {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.usage dd {
+  margin: 0.15rem 0 0;
+  font: 600 1.5rem var(--font-display);
+}
+
+.usage-meter {
+  width: 100%;
+  height: 0.7rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem;
+}
+
+.plans-page {
+  max-width: 60rem;
+  margin: 0 auto;
+}
+
+.plan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1.25rem;
+}
+
+.plan-card {
+  display: grid;
+  gap: 0.8rem;
+  align-content: start;
+}
+
+.plan-card.current {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 2px var(--accent),
+    var(--shadow);
+}
+
+.plan-card.upcoming {
+  background:
+    radial-gradient(120% 80% at 100% 0%, var(--accent-soft), transparent 60%), var(--surface);
+}
+
+.plan-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.plan-price {
+  font: 600 2rem var(--font-display);
+}
+
+.plan-features {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.plan-features li {
+  padding-left: 1.6rem;
+  position: relative;
+}
+
+.plan-features li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.faq summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.faq details p {
+  margin-top: 0.5rem;
+}
+
+.account-page .card,
+.account-page .danger-zone {
+  display: grid;
+  gap: 1.2rem;
+}
+
+.account-page .card h2,
+.plans-page .card h2 {
+  font-size: 1.35rem;
+}
+
+.account-page .actions {
+  align-items: center;
+}
+
+.plan-card.upcoming .plan-price {
+  font-size: 1.25rem;
+  color: var(--muted);
+}
+
+.plans-page .faq {
+  display: grid;
+  gap: 1rem;
+}

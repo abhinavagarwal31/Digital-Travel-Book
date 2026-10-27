@@ -15,9 +15,17 @@ function cookieOptions(config: SessionConfig): CookieOptions {
   return { httpOnly: true, sameSite: 'lax', secure: config.cookieSecure, path: '/' };
 }
 
-/** Signs a session for the user and sets it as an HttpOnly cookie. */
-export function issueSession(res: Response, userId: string, config: SessionConfig): void {
-  const token = jwt.sign({}, config.jwtSecret, {
+/**
+ * Signs a session for the user and sets it as an HttpOnly cookie. It carries
+ * the user's session version: bumping that signs out every older session.
+ */
+export function issueSession(
+  res: Response,
+  userId: string,
+  config: SessionConfig,
+  version = 0,
+): void {
+  const token = jwt.sign({ sv: version }, config.jwtSecret, {
     algorithm: 'HS256',
     subject: userId,
     expiresIn: SESSION_TTL_SECONDS,
@@ -33,16 +41,24 @@ export function clearSession(res: Response, config: SessionConfig): void {
 }
 
 /**
- * The user id from a valid session cookie, or null. Only HS256 with our secret
- * is accepted, so unsigned ("alg: none") or re-signed tokens fail, as do expired ones.
+ * The user and session version from a valid session cookie, or null. Only
+ * HS256 with our secret is accepted, so unsigned ("alg: none") or re-signed
+ * tokens fail, as do expired ones. Sessions from before versions existed are 0.
  */
-export function readSessionUserId(req: Request, config: SessionConfig): string | null {
+export function readSession(
+  req: Request,
+  config: SessionConfig,
+): { userId: string; version: number } | null {
   const token: unknown = req.cookies?.[SESSION_COOKIE];
   if (typeof token !== 'string' || token === '') return null;
   try {
     const payload = jwt.verify(token, config.jwtSecret, { algorithms: ['HS256'] });
-    const sub = typeof payload === 'object' ? payload.sub : undefined;
-    return typeof sub === 'string' && mongoose.isValidObjectId(sub) ? sub : null;
+    if (typeof payload !== 'object') return null;
+    const sub = payload.sub;
+    const version = typeof payload.sv === 'number' ? payload.sv : 0;
+    return typeof sub === 'string' && mongoose.isValidObjectId(sub)
+      ? { userId: sub, version }
+      : null;
   } catch {
     return null;
   }

@@ -1,4 +1,9 @@
-import { MAX_PHOTOS_PER_BOOK, MAX_UPLOAD_BYTES, type UploadIntentResult } from '@tb/shared';
+import {
+  MAX_PHOTOS_PER_BOOK,
+  MAX_UPLOAD_BYTES,
+  photoLimit,
+  type UploadIntentResult,
+} from '@tb/shared';
 import mongoose from 'mongoose';
 import { createHash } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -271,10 +276,10 @@ describe('validation and limits', () => {
     expect((await announce(asha, files)).status).toBe(400);
   });
 
-  it(`stops a book at ${MAX_PHOTOS_PER_BOOK} photos`, async () => {
+  async function fillBook(count: number) {
     const userId = (await asha.get('/api/auth/me')).body.user.id;
     await PhotoModel.insertMany(
-      Array.from({ length: MAX_PHOTOS_PER_BOOK }, (_, i) => ({
+      Array.from({ length: count }, (_, i) => ({
         userId,
         bookId,
         originalFilename: `${i}.jpg`,
@@ -285,9 +290,25 @@ describe('validation and limits', () => {
         status: 'ready',
       })),
     );
+    return userId as string;
+  }
+
+  it(`stops a book at the Free plan's ${photoLimit('free')} photos`, async () => {
+    await fillBook(photoLimit('free'));
     const res = await announce(asha, [describeFile(KYOTO_PHOTO)]);
     expect(res.status).toBe(409);
-    expect(res.body.error).toMatchObject({ code: 'PHOTO_LIMIT', details: { remaining: 0 } });
+    expect(res.body.error).toMatchObject({
+      code: 'PHOTO_LIMIT',
+      message: 'On the Free plan a book holds up to 200 photos',
+      details: { remaining: 0, limit: 200 },
+    });
+  });
+
+  it(`lets Pro go further, but never past the ${MAX_PHOTOS_PER_BOOK} every book shares`, async () => {
+    const userId = await fillBook(photoLimit('free'));
+    await UserModel.updateOne({ _id: userId }, { $set: { plan: 'pro' } });
+    expect((await announce(asha, [describeFile(KYOTO_PHOTO)])).status).toBe(200);
+    expect(photoLimit('pro')).toBe(MAX_PHOTOS_PER_BOOK);
   });
 
   it('answers 503 when storage is not configured', async () => {

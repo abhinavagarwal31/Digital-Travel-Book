@@ -1,15 +1,7 @@
 import { Link, Outlet, useNavigate } from 'react-router';
 import { useCurrentUser, useLogout } from '../lib/auth.ts';
+import { initials } from '../lib/names.ts';
 import { BrandMark } from './BrandMark.tsx';
-
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('');
-}
 
 export function Layout() {
   const me = useCurrentUser();
@@ -25,10 +17,19 @@ export function Layout() {
         </Link>
         {me.data ? (
           <div className="account">
-            <span className="avatar" aria-hidden="true">
-              {initials(me.data.name)}
-            </span>
-            <span className="muted">{me.data.name}</span>
+            <Link to="/plans" className="header-link">
+              Plans
+            </Link>
+            <Link
+              to="/account"
+              className="account-link"
+              aria-label={`Your account: ${me.data.name}`}
+            >
+              <span className="avatar" aria-hidden="true">
+                {initials(me.data.name)}
+              </span>
+              <span className="muted">{me.data.name}</span>
+            </Link>
             <button
               type="button"
               className="button ghost"
@@ -43,6 +44,9 @@ export function Layout() {
         ) : (
           me.isSuccess && (
             <div className="account">
+              <Link to="/plans" className="header-link">
+                Plans
+              </Link>
               <Link to="/login" className="button ghost">
                 Log in
               </Link>
