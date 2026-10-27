@@ -36,6 +36,9 @@ describe('creating and reading books', () => {
       ...JAPAN,
       description: '',
       theme: { kind: 'preset', id: 'editorial', version: 1 },
+      days: [],
+      chapters: [],
+      chaptersEdited: false,
       createdAt: expect.any(String),
       updatedAt: expect.any(String),
     });

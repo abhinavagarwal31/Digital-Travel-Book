@@ -66,6 +66,10 @@ export const bookSchema = z.object({
   defaultTz: z.string(),
   destinations: z.array(z.string()),
   theme: z.object({ kind: z.literal('preset'), id: z.enum(THEME_IDS), version: z.number() }),
+  /** Diary entries only; the book's full set of days is derived (see daySet). */
+  days: z.array(z.object({ date: z.string(), diary: z.string() })),
+  chapters: z.array(z.object({ id: z.string(), title: z.string(), dayDates: z.array(z.string()) })),
+  chaptersEdited: z.boolean(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

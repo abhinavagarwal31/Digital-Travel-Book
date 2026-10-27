@@ -1,4 +1,5 @@
 import {
+  captureFields,
   createBookBodySchema,
   tripRangeProblem,
   updateBookBodySchema,
@@ -12,6 +13,8 @@ import { validateBody } from '../../lib/validate.ts';
 import { authUserId, requireAuth } from '../auth/requireAuth.ts';
 import type { ImageStorage } from '../../lib/storage.ts';
 import type { SessionConfig } from '../auth/session.ts';
+import { timeZoneAt } from '../../lib/timeZoneAt.ts';
+import { reorganize } from '../organize/organize.service.ts';
 import { bookStoragePrefix, PhotoModel } from '../photos/photo.model.ts';
 import { BookModel, toBookDTO } from './book.model.ts';
 
@@ -67,7 +70,29 @@ export function createBooksRouter(config: BooksRouterConfig): Router {
       { returnDocument: 'after', runValidators: true },
     );
     if (!updated) throw notFound();
-    res.json({ book: toBookDTO(updated) });
+
+    // A new default zone re-dates the photos whose time was read in that zone.
+    if (changes.defaultTz && changes.defaultTz !== current.defaultTz) {
+      const assumed = await PhotoModel.find({
+        bookId: updated._id,
+        userId,
+        status: 'ready',
+        timeSource: 'book-default',
+      });
+      for (const photo of assumed) {
+        const fields = captureFields(photo.exif ?? {}, updated, timeZoneAt);
+        await PhotoModel.updateOne(
+          { _id: photo._id, timeSource: 'book-default' },
+          { $set: { capturedAt: fields.capturedAt ? new Date(fields.capturedAt) : null } },
+        );
+      }
+    }
+
+    // New dates or zone change which days photos fall on: re-organise (never
+    // moving photos the user placed, never deleting diaries or chapters).
+    const datesOrZone = changes.startDate || changes.endDate || changes.defaultTz;
+    const book = datesOrZone ? (await reorganize(updated.id, userId)).book : updated;
+    res.json({ book: toBookDTO(book) });
   });
 
   router.delete('/:bookId', async (req, res) => {
