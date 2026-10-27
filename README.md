@@ -2,7 +2,7 @@
 
 Turn a trip's photos into a private, organised travel book with real turning pages.
 
-**Live app:** https://wanderbook.onrender.com · **Repository:** https://github.com/abhinavagarwal31/Wanderbook
+**Live app:** https://wanderbook-7rnn.onrender.com · **Repository:** https://github.com/abhinavagarwal31/Wanderbook
 
 > The app runs on Render's free tier, which sleeps after ~15 minutes without visitors. The first visit after a pause can take up to a minute to wake it.
 
@@ -159,7 +159,7 @@ The server validates its configuration at start-up and refuses to start with a c
 
 The app is deployed as a single **Render** web service (Singapore region, free tier): Express serves both the API and the built frontend, MongoDB Atlas (M0) holds the data, and Cloudinary holds the photos.
 
-- **Live:** https://wanderbook.onrender.com
+- **Live:** https://wanderbook-7rnn.onrender.com
 - Build command: `npm ci --include=dev && npm run build`
 - Start command: `npm start`
 - Health check: `GET /api/health` returns `{"status":"ok","db":"up"}`

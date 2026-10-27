@@ -40,8 +40,12 @@ export function createApp(config: AppConfig): express.Express {
   app.use(
     helmet({
       contentSecurityPolicy: {
-        // Book maps load their tiles straight from Stadia Maps.
-        directives: { imgSrc: ["'self'", 'data:', 'https://tiles.stadiamaps.com'] },
+        // Book maps load their tiles straight from Stadia Maps, and the browser
+        // sends photos straight to Cloudinary with one-off signed fields.
+        directives: {
+          imgSrc: ["'self'", 'data:', 'https://tiles.stadiamaps.com'],
+          connectSrc: ["'self'", 'https://api.cloudinary.com'],
+        },
       },
     }),
   );

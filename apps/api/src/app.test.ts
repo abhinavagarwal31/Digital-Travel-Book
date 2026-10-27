@@ -88,6 +88,11 @@ describe('security headers', () => {
       .split(';')
       .find((d) => d.startsWith('img-src'));
     expect(imgSrc).toBe("img-src 'self' data: https://tiles.stadiamaps.com");
+    // Uploads go from the browser straight to Cloudinary; nothing else may be contacted.
+    const connectSrc = (res.headers['content-security-policy'] as string)
+      .split(';')
+      .find((d) => d.startsWith('connect-src'));
+    expect(connectSrc).toBe("connect-src 'self' https://api.cloudinary.com");
   });
 
   it('trusts exactly one proxy hop for the client IP', async () => {

@@ -14,16 +14,16 @@ One Render **Web Service** runs everything: Express serves the API and the built
 2. **+ New → Web Service**. When GitHub asks for access, choose **Only select repositories → `Wanderbook`**.
 3. Fill in:
 
-| Field          | Value                                                    |
-| -------------- | -------------------------------------------------------- |
-| Name           | `wanderbook` (becomes `https://wanderbook.onrender.com`) |
-| Language       | Node                                                     |
-| Branch         | `main`                                                   |
-| Region         | **Singapore** (same region as the Atlas cluster)         |
-| Root Directory | _(empty)_                                                |
-| Build Command  | `npm ci --include=dev && npm run build`                  |
-| Start Command  | `npm start`                                              |
-| Instance Type  | **Free**                                                 |
+| Field          | Value                                                         |
+| -------------- | ------------------------------------------------------------- |
+| Name           | `wanderbook` (becomes `https://wanderbook-7rnn.onrender.com`) |
+| Language       | Node                                                          |
+| Branch         | `main`                                                        |
+| Region         | **Singapore** (same region as the Atlas cluster)              |
+| Root Directory | _(empty)_                                                     |
+| Build Command  | `npm ci --include=dev && npm run build`                       |
+| Start Command  | `npm start`                                                   |
+| Instance Type  | **Free**                                                      |
 
 `--include=dev` matters: with `NODE_ENV=production`, npm would otherwise skip the build tools (Vite, TypeScript) and the build would fail.
 
