@@ -3,6 +3,7 @@ import { contentDays, resolveChapters } from '../organize/structure.ts';
 import { DEFAULT_ORGANIZE_CONFIG, type Chapter, type OrganizablePhoto } from '../organize/types.ts';
 import { tripLengthDays } from '../schemas/book.ts';
 import { LAYOUT_CAPACITY, type PhotoLayout, type ThemeDefinition } from '../themes/definition.ts';
+import { arrangePhotos, aspectOf, type Arrangement } from './arrange.ts';
 import { chapterRouteMap, tripRouteMap, type RouteMap } from './maps.ts';
 import { DIARY_BUDGET, paginateText } from './paginate.ts';
 
@@ -38,6 +39,7 @@ export type BookPage =
       dayNumber: number;
       heroPhotoId: string;
       heroCaption: string;
+      heroAspect: number;
       photoCount: number;
       /** First and last local times of the day's photos, when known ("08:05"). */
       timeRange: [string, string] | null;
@@ -58,13 +60,22 @@ export type BookPage =
       photoIds: string[];
       /** Captions by photo id; photos without one are not listed. */
       captions: Record<string, string>;
+      /** How the page lays them out so each is shown whole and large. */
+      arrangement: Arrangement;
+      /** Width ÷ height of each photo, in order, so frames take its shape. */
+      aspects: number[];
     }
   | { kind: 'closing'; dayCount: number; photoCount: number }
   | { kind: 'blank' }
   | { kind: 'back-cover' };
 
 /** The photo fields composition needs (locations too, for the maps); the API's Photo fits. */
-export type ComposablePhoto = OrganizablePhoto & { caption: string };
+export type ComposablePhoto = OrganizablePhoto & {
+  caption: string;
+  /** Displayed size; unknown for older photos (treated as 4:3). */
+  width?: number | null;
+  height?: number | null;
+};
 
 export interface ComposableBook {
   startDate: string;
@@ -146,6 +157,7 @@ function dayPages(
       dayNumber,
       heroPhotoId: hero.id,
       heroCaption: hero.caption,
+      heroAspect: aspectOf(hero),
       photoCount: photos.length,
       timeRange: times.length > 0 ? [times[0] as string, times.at(-1) as string] : null,
     });
@@ -165,6 +177,8 @@ function dayPages(
       dayDate,
       photoIds: chunk.map((p) => p.id),
       captions: Object.fromEntries(chunk.filter((p) => p.caption).map((p) => [p.id, p.caption])),
+      arrangement: arrangePhotos(chunk.map(aspectOf)),
+      aspects: chunk.map(aspectOf),
     });
     offset += size;
   }

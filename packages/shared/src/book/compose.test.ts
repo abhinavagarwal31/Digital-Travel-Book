@@ -103,6 +103,7 @@ describe('composeBook', () => {
         dayNumber: 1,
         heroPhotoId: day1.id,
         heroCaption: '',
+        heroAspect: 4 / 3,
         photoCount: 1,
         timeRange: ['10:15', '10:15'],
       },
@@ -112,10 +113,18 @@ describe('composeBook', () => {
         dayNumber: 3,
         heroPhotoId: early.id,
         heroCaption: '',
+        heroAspect: 4 / 3,
         photoCount: 3,
         timeRange: ['08:05', '18:30'],
       },
-      { kind: 'photos', dayDate: '2026-10-12', photoIds: [mid.id, late.id], captions: {} },
+      {
+        kind: 'photos',
+        dayDate: '2026-10-12',
+        photoIds: [mid.id, late.id],
+        captions: {},
+        arrangement: 'rows',
+        aspects: [4 / 3, 4 / 3],
+      },
       { kind: 'closing', dayCount: 2, photoCount: 4 },
       { kind: 'back-cover' },
     ]);
@@ -150,6 +159,8 @@ describe('composeBook', () => {
       dayDate: '2026-10-11',
       photoIds: [untimed.id],
       captions: {},
+      arrangement: 'single',
+      aspects: [4 / 3],
     });
     expect(pages[5]).toMatchObject({ kind: 'day', dayDate: '2026-10-13', timeRange: null });
   });
@@ -467,5 +478,18 @@ describe("the owner's photo order", () => {
     const gone = photo('2026-10-11', '09:00:00');
     expect(orderDayPhotos([a, b], [gone.id, b.id]).map((p) => p.id)).toEqual([b.id, a.id]);
     expect(orderDayPhotos([a, b]).map((p) => p.id)).toEqual([a.id, b.id]);
+  });
+});
+
+it('lays a page out by the shapes of its photos', () => {
+  const tall = { width: 1200, height: 1600 };
+  const a = photo('2026-10-10', '08:00:00');
+  const b = photo('2026-10-10', '09:00:00', tall);
+  const c = photo('2026-10-10', '10:00:00', tall);
+  const pages = composeBook(BOOK, [a, b, c]);
+  expect(pages.find((p) => p.kind === 'photos')).toMatchObject({
+    photoIds: [b.id, c.id],
+    arrangement: 'columns',
+    aspects: [0.75, 0.75],
   });
 });

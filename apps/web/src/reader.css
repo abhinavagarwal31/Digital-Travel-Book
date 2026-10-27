@@ -551,9 +551,12 @@
   margin-bottom: 4cqw;
 }
 
-.day-hero {
+/* The day's opening photo, whole: centred in the space left on the page. */
+.day-hero-frame {
   flex: 1;
   min-height: 0;
+  display: grid;
+  place-items: center;
 }
 
 .day-meta {
@@ -569,20 +572,64 @@
   gap: 2.4cqw;
 }
 
-.count-1 .photo-layout {
+/* Arrangements chosen by the photos' shapes (arrangePhotos in @tb/shared;
+   the proportions here match its geometry). */
+.photo-layout[data-arrangement='single'] {
   grid-template: 1fr / 1fr;
 }
 
-.count-2 .photo-layout {
+.photo-layout[data-arrangement='rows'] {
   grid-template: 1fr 1fr / 1fr;
 }
 
-.count-3 .photo-layout {
-  grid-template: 1.3fr 1fr / 1fr 1fr;
+.photo-layout[data-arrangement='columns'] {
+  grid-template: 1fr / 1fr 1fr;
 }
 
-.count-4 .photo-layout {
+.photo-layout[data-arrangement='top-one'] {
+  grid-template: 55fr 45fr / 1fr 1fr;
+}
+
+.photo-layout[data-arrangement='top-one'] > :first-child {
+  grid-column: 1 / -1;
+}
+
+.photo-layout[data-arrangement='left-one'] {
+  grid-template: 1fr 1fr / 55fr 45fr;
+}
+
+.photo-layout[data-arrangement='left-one'] > :first-child {
+  grid-row: 1 / -1;
+}
+
+.photo-layout[data-arrangement='rows-3'] {
+  grid-template: repeat(3, 1fr) / 1fr;
+}
+
+.photo-layout[data-arrangement='columns-3'] {
+  grid-template: 1fr / repeat(3, 1fr);
+}
+
+.photo-layout[data-arrangement='grid'] {
   grid-template: 1fr 1fr / 1fr 1fr;
+}
+
+/* Never cropped: each photo keeps its shape and fits its cell, centred. */
+.reader-stage .page img.day-hero,
+.reader-stage .page .page-photo img {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  min-width: 0;
+  min-height: 0;
+  object-fit: contain;
+  place-self: center;
+}
+
+/* With a caption, the photo sits right above it. */
+.reader-stage .page .page-photo:has(figcaption) img {
+  align-self: end;
 }
 
 .closing-page {
@@ -773,10 +820,6 @@
   -webkit-line-clamp: 3;
   line-clamp: 3;
   font-size: 2.9cqw;
-}
-
-.count-3 .page-photo:first-child {
-  grid-column: 1 / -1;
 }
 
 .day-caption {

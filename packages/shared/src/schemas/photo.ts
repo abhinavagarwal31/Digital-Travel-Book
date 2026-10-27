@@ -76,5 +76,8 @@ export interface Photo {
   camera: { make: string | null; model: string | null };
   caption: string;
   hidden: boolean;
+  /** As displayed (sideways photos already turned upright); null for photos from before this was recorded. */
+  width: number | null;
+  height: number | null;
   createdAt: string;
 }

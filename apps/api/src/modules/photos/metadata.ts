@@ -1,5 +1,6 @@
 import type { RawCaptureData } from '@tb/shared';
 import exifr from 'exifr';
+import { imageSize } from 'image-size';
 
 export type ImageMime = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/heic';
 
@@ -121,4 +122,22 @@ export async function readExif(bytes: Buffer): Promise<RawExif> {
   if (make) result.make = make;
   if (model) result.model = model;
   return result;
+}
+
+/**
+ * The photo's size as people see it. Phones often store a picture sideways
+ * with an "orientation" tag saying how to turn it (values 5–8 are a quarter
+ * turn), so those swap width and height. Null when the file does not say.
+ */
+export function displayedSize(bytes: Buffer): { width: number; height: number } | null {
+  try {
+    const size = imageSize(bytes);
+    if (!size.width || !size.height) return null;
+    const sideways = (size.orientation ?? 1) >= 5;
+    return sideways
+      ? { width: size.height, height: size.width }
+      : { width: size.width, height: size.height };
+  } catch {
+    return null;
+  }
 }

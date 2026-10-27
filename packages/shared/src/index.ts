@@ -1,3 +1,4 @@
+export * from './book/arrange.ts';
 export * from './book/compose.ts';
 export * from './book/maps.ts';
 export * from './book/paginate.ts';

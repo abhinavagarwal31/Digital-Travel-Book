@@ -28,7 +28,7 @@ import { authUserId, requireAuth } from '../auth/requireAuth.ts';
 import type { SessionConfig } from '../auth/session.ts';
 import { UserModel } from '../auth/user.model.ts';
 import { BookModel } from '../books/book.model.ts';
-import { readExif, sniffImageType } from './metadata.ts';
+import { displayedSize, readExif, sniffImageType } from './metadata.ts';
 import { bookStoragePrefix, PhotoModel, toPhotoDTO, type PhotoFields } from './photo.model.ts';
 
 export interface PhotosRouterConfig extends SessionConfig {
@@ -208,6 +208,7 @@ export function createPhotosRouter(config: PhotosRouterConfig): Router {
 
       const exif = await readExif(bytes);
       const fields = captureFields(exif, book, timeZoneAt);
+      const size = displayedSize(bytes);
       const updated = await PhotoModel.findOneAndUpdate(
         { _id: photo._id, userId, status: 'pending' },
         {
@@ -226,6 +227,8 @@ export function createPhotosRouter(config: PhotosRouterConfig): Router {
             dayDate: fields.dayDate,
             assignedBy: 'auto',
             flags: fields.flags,
+            width: size?.width ?? null,
+            height: size?.height ?? null,
           },
         },
         { returnDocument: 'after' },

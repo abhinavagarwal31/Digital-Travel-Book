@@ -13,7 +13,8 @@ const longDate = new Intl.DateTimeFormat('en-GB', {
   timeZone: 'UTC',
 });
 
-function Photo({ id, className }: { id: string; className?: string }) {
+/** A photo at its own shape: its frame (mount, polaroid, panel) wraps the whole picture. */
+function Photo({ id, aspect, className }: { id: string; aspect: number; className?: string }) {
   return (
     <img
       className={className}
@@ -21,15 +22,24 @@ function Photo({ id, className }: { id: string; className?: string }) {
       alt=""
       loading="lazy"
       draggable={false}
+      style={{ aspectRatio: aspect }}
     />
   );
 }
 
 /** A photo with its caption beneath, when it has one. */
-function CaptionedPhoto({ id, caption }: { id: string; caption: string | undefined }) {
+function CaptionedPhoto({
+  id,
+  aspect,
+  caption,
+}: {
+  id: string;
+  aspect: number;
+  caption: string | undefined;
+}) {
   return (
     <figure className="page-photo">
-      <Photo id={id} />
+      <Photo id={id} aspect={aspect} />
       {caption && <figcaption>{caption}</figcaption>}
     </figure>
   );
@@ -159,7 +169,9 @@ export function PageView({ page, index, book, theme, ownerName }: PageViewProps)
         <div className="page day-page">
           <p className="page-eyebrow">{dayEyebrow(page.dayNumber)}</p>
           <h2>{longDate.format(new Date(`${page.dayDate}T00:00:00Z`))}</h2>
-          <Photo id={page.heroPhotoId} className="day-hero" />
+          <div className="day-hero-frame">
+            <Photo id={page.heroPhotoId} aspect={page.heroAspect} className="day-hero" />
+          </div>
           {page.heroCaption && <p className="day-caption">{page.heroCaption}</p>}
           <p className="day-meta">
             {page.photoCount} {page.photoCount === 1 ? 'photo' : 'photos'}
@@ -197,9 +209,14 @@ export function PageView({ page, index, book, theme, ownerName }: PageViewProps)
     case 'photos':
       return (
         <div className={`page photos-page count-${page.photoIds.length}`}>
-          <div className="photo-layout">
-            {page.photoIds.map((id) => (
-              <CaptionedPhoto key={id} id={id} caption={page.captions[id]} />
+          <div className="photo-layout" data-arrangement={page.arrangement}>
+            {page.photoIds.map((id, i) => (
+              <CaptionedPhoto
+                key={id}
+                id={id}
+                aspect={page.aspects[i] ?? 4 / 3}
+                caption={page.captions[id]}
+              />
             ))}
           </div>
           {number}

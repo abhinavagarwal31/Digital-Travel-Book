@@ -35,6 +35,9 @@ export interface PhotoFields {
   assignedBy: 'auto' | 'user';
   flags: PhotoFlag[];
   caption: string;
+  /** Displayed size, upright; null until confirmed (and for older photos). */
+  width: number | null;
+  height: number | null;
   hidden: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -82,6 +85,8 @@ const photoSchema = new mongoose.Schema<PhotoFields>(
     assignedBy: { type: String, enum: ['auto', 'user'], default: 'auto' },
     flags: { type: [{ type: String, enum: PHOTO_FLAGS }], default: [] },
     caption: { type: String, default: '' },
+    width: { type: Number, default: null },
+    height: { type: Number, default: null },
     hidden: { type: Boolean, default: false },
   },
   { timestamps: true },
@@ -125,6 +130,8 @@ export function toPhotoDTO(photo: HydratedDocument<PhotoFields>): Photo {
     camera: { make: photo.exif?.make ?? null, model: photo.exif?.model ?? null },
     caption: photo.caption,
     hidden: photo.hidden,
+    width: photo.width ?? null,
+    height: photo.height ?? null,
     createdAt: photo.createdAt.toISOString(),
   };
 }

@@ -36,6 +36,8 @@ function photo(id: string, day: string, time: string, lat: number, lng: number):
     camera: { make: null, model: null },
     caption: '',
     hidden: false,
+    width: null,
+    height: null,
     createdAt: '2026-10-20T00:00:00.000Z',
   };
 }
