@@ -12,6 +12,7 @@ import '@fontsource-variable/caveat';
 import '@fontsource-variable/fraunces';
 import '@fontsource-variable/inter';
 import '@fontsource-variable/playfair-display';
+import '@fontsource-variable/plus-jakarta-sans';
 import './styles.css';
 
 const queryClient = new QueryClient({

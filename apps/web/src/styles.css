@@ -1,31 +1,34 @@
-/* Design system for the editor screens: warm paper, ink, and a terracotta
-   accent, with a serif for anything that reads like a book and a clean sans
-   for the interface. The book's own themes build on the same tokens. */
+/* Design system for the app around the book: an outdoor palette (ocean teal,
+   deep forest and a sunrise gold on mist white), a modern sans for headings,
+   and a faint topographic map behind everything. The books keep their own
+   classic themes. */
 
 :root {
-  --paper: #f6f0e6;
-  --surface: #fffcf7;
-  --surface-sunk: #efe7da;
-  --ink: #1d1a16;
-  --muted: #6c6357;
-  --line: #e4d9c8;
-  --accent: #b4532a;
+  --paper: #f2f6f5;
+  --surface: #ffffff;
+  --surface-sunk: #e6efed;
+  --ink: #0d2629;
+  --muted: #4f6b6e;
+  --line: #d3e1de;
+  --accent: #0f766e;
   --accent-ink: #ffffff;
-  --accent-soft: #f4e1d6;
-  --teal: #1f5560;
+  --accent-soft: #d3efe9;
+  --teal: #0b4f6c;
+  --sun: #f5a524;
   --danger: #b42318;
   --danger-soft: #fbe4e1;
   --focus: #2563eb;
+  --topo: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='560' height='560' viewBox='0 0 560 560'%3E%3Cg fill='none' stroke='%230f766e' stroke-opacity='0.07' stroke-width='1.2'%3E%3Cpath d='M280 120c70-6 128 34 140 96s-20 118-82 140-140 10-176-42-22-128 24-164 58-28 94-30z'/%3E%3Cpath d='M282 80c96-8 170 46 186 128s-28 160-112 190-190 14-238-56-30-174 32-222 78-38 132-40z'/%3E%3Cpath d='M284 40c120-10 214 58 234 160s-36 200-140 238-238 18-298-70-38-218 40-278 98-48 164-50z'/%3E%3Cpath d='M278 168c40-2 72 20 78 54s-12 64-46 76-78 4-96-24-10-70 14-90 32-15 50-16z'/%3E%3Cpath d='M276 208c18 0 32 10 34 24s-6 28-20 32-34 2-42-10-4-30 8-38 12-8 20-8z'/%3E%3Cpath d='M-20 470c80-30 150-10 220 20s170 40 250 0 120-30 130-20'/%3E%3Cpath d='M-20 520c90-26 160-6 230 22s160 34 240-2 110-24 130-16'/%3E%3C/g%3E%3C/svg%3E");
 
-  --font-display: 'Fraunces Variable', 'Iowan Old Style', Georgia, serif;
+  --font-display: 'Plus Jakarta Sans Variable', 'Inter Variable', system-ui, sans-serif;
   --font-ui: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   --radius-sm: 8px;
-  --radius: 14px;
-  --radius-lg: 22px;
-  --shadow-sm: 0 1px 2px rgb(40 28 14 / 0.06), 0 1px 1px rgb(40 28 14 / 0.04);
-  --shadow: 0 10px 30px -12px rgb(40 28 14 / 0.25), 0 2px 6px rgb(40 28 14 / 0.06);
-  --shadow-lg: 0 30px 60px -20px rgb(40 28 14 / 0.35);
+  --radius: 16px;
+  --radius-lg: 24px;
+  --shadow-sm: 0 1px 2px rgb(8 40 44 / 0.06), 0 1px 1px rgb(8 40 44 / 0.04);
+  --shadow: 0 12px 32px -14px rgb(8 40 44 / 0.28), 0 2px 6px rgb(8 40 44 / 0.06);
+  --shadow-lg: 0 30px 60px -22px rgb(8 40 44 / 0.4);
 
   color-scheme: light;
   font-family: var(--font-ui);
@@ -36,22 +39,23 @@
 }
 
 /* Dark: chosen in the header or account page, or following the system
-   (public/theme-init.js and lib/appearance.ts set data-theme). */
+   (public/theme-init.js and lib/appearance.ts set data-theme). Deep sea at night. */
 :root[data-theme='dark'] {
-  --paper: #13100d;
-  --surface: #1c1814;
-  --surface-sunk: #241f1a;
-  --ink: #f3ebdf;
-  --muted: #a89c8c;
-  --line: #342d25;
-  --accent: #e48c62;
-  --accent-ink: #1b100a;
-  --accent-soft: #3a261c;
-  --teal: #7fb7c0;
+  --paper: #071a1e;
+  --surface: #0d2429;
+  --surface-sunk: #12313a;
+  --ink: #e4f2f0;
+  --muted: #8db0ad;
+  --line: #1c3c42;
+  --accent: #2fbfa8;
+  --accent-ink: #04211d;
+  --accent-soft: #0f3a37;
+  --teal: #5fb4cf;
+  --sun: #f7b84b;
   --danger: #ff8a7a;
   --danger-soft: #3b1d19;
-  --shadow: 0 10px 30px -12px rgb(0 0 0 / 0.6), 0 2px 6px rgb(0 0 0 / 0.3);
-  --shadow-lg: 0 30px 60px -20px rgb(0 0 0 / 0.7);
+  --shadow: 0 12px 32px -14px rgb(0 0 0 / 0.65), 0 2px 6px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 30px 60px -20px rgb(0 0 0 / 0.75);
   color-scheme: dark;
 }
 
@@ -65,7 +69,14 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(1200px 600px at 10% -10%, var(--accent-soft), transparent 60%), var(--paper);
+    radial-gradient(
+      1100px 520px at 100% -10%,
+      color-mix(in srgb, var(--teal) 14%, transparent),
+      transparent 65%
+    ),
+    radial-gradient(900px 500px at -10% 0%, var(--accent-soft), transparent 60%),
+    var(--topo) 0 0 / 560px 560px,
+    var(--paper);
   background-attachment: fixed;
 }
 
@@ -73,9 +84,9 @@ h1,
 h2,
 h3 {
   font-family: var(--font-display);
-  font-weight: 600;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.025em;
   margin: 0;
 }
 
@@ -137,8 +148,9 @@ a {
   color: var(--ink);
   text-decoration: none;
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1.15rem;
+  font-weight: 800;
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
 }
 
 .brand svg {
@@ -3158,6 +3170,64 @@ textarea[aria-invalid='true'] {
   padding-bottom: 2rem;
 }
 
+/* The hero runs edge to edge over an illustrated landscape. */
+.app {
+  overflow-x: clip;
+}
+
+.landing > .hero {
+  position: relative;
+  isolation: isolate;
+  margin: calc(-1 * clamp(1.5rem, 4vw, 3rem)) calc(50% - 50vw) 0;
+  padding: clamp(3rem, 8vw, 6rem) max(clamp(1rem, 4vw, 2.5rem), calc(50vw - 560px))
+    clamp(5rem, 11vw, 9rem);
+  color: #ffffff;
+  overflow: hidden;
+}
+
+.hero-scene {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+}
+
+.hs-flight {
+  animation: hs-fly 30s linear infinite;
+}
+
+@keyframes hs-fly {
+  to {
+    stroke-dashoffset: -280;
+  }
+}
+
+.landing > .hero h1 {
+  color: #ffffff;
+  text-shadow: 0 2px 24px rgb(4 30 40 / 0.35);
+}
+
+.landing > .hero h1 em {
+  font-style: normal;
+  color: var(--sun);
+}
+
+.landing > .hero .eyebrow {
+  color: #ffd486;
+}
+
+.landing > .hero .lede,
+.landing > .hero .hero-note {
+  color: rgb(255 255 255 / 0.86);
+}
+
+.landing > .hero .button.ghost {
+  color: #ffffff;
+  background: rgb(255 255 255 / 0.1);
+  border-color: rgb(255 255 255 / 0.55);
+}
+
 .landing h2 {
   font-size: clamp(1.7rem, 1.2rem + 1.8vw, 2.5rem);
   line-height: 1.12;
@@ -3274,10 +3344,11 @@ textarea[aria-invalid='true'] {
   padding: clamp(2.2rem, 6vw, 4rem) 1.5rem;
   text-align: center;
   border-radius: var(--radius);
-  color: #fbf3e4;
+  color: #ffffff;
   background:
-    radial-gradient(120% 120% at 15% 0%, rgb(255 255 255 / 0.12), transparent 55%),
-    linear-gradient(135deg, #6b4430, #3b2419);
+    var(--topo) 0 0 / 420px 420px,
+    radial-gradient(120% 120% at 85% 0%, rgb(245 165 36 / 0.35), transparent 55%),
+    linear-gradient(135deg, #0b4f6c, #0f766e);
   box-shadow: var(--shadow);
 }
 

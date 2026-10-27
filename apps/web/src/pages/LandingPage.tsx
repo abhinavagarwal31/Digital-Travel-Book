@@ -83,6 +83,73 @@ function SampleCover({ themeId, className }: { themeId: ThemeId; className?: str
   );
 }
 
+/** Sunrise over mountains and sea, with a flight path across the sky: the hero's backdrop. */
+function HeroScene() {
+  return (
+    <svg
+      className="hero-scene"
+      viewBox="0 0 1440 640"
+      preserveAspectRatio="xMidYMax slice"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id="hs-sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#0a2f4a" />
+          <stop offset="0.45" stopColor="#1a7f95" />
+          <stop offset="0.75" stopColor="#7fc4bf" />
+          <stop offset="1" stopColor="#ffd59a" />
+        </linearGradient>
+        <radialGradient id="hs-glow" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" stopColor="#ffe3a3" stopOpacity="0.9" />
+          <stop offset="1" stopColor="#ffe3a3" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="hs-sea" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#1a7480" />
+          <stop offset="1" stopColor="#06303a" />
+        </linearGradient>
+      </defs>
+      <rect width="1440" height="640" fill="url(#hs-sky)" />
+      <circle cx="1330" cy="330" r="240" fill="url(#hs-glow)" />
+      <circle cx="1330" cy="330" r="54" fill="#ffd486" />
+      <path
+        className="hs-flight"
+        d="M-40 300 C 260 140, 620 120, 900 190 S 1320 300, 1500 170"
+        fill="none"
+        stroke="#ffffff"
+        strokeOpacity="0.55"
+        strokeWidth="2"
+        strokeDasharray="2 12"
+        strokeLinecap="round"
+      />
+      <path d="M1000 180 l22 -6 -6 6 6 6z" fill="#ffffff" opacity="0.9" />
+      <g fill="none" stroke="#06283a" strokeOpacity="0.55" strokeWidth="2.2" strokeLinecap="round">
+        <path d="M300 220 q8 -8 16 0 q8 -8 16 0" />
+        <path d="M352 200 q6 -6 12 0 q6 -6 12 0" />
+        <path d="M1180 250 q7 -7 14 0 q7 -7 14 0" />
+      </g>
+      <path
+        d="M0 470 L120 380 L210 430 L330 320 L450 420 L560 360 L700 450 L820 370 L930 440 L1060 350 L1180 420 L1300 340 L1440 420 V640 H0 Z"
+        fill="#3d8a8f"
+        opacity="0.55"
+      />
+      <path
+        d="M0 520 L150 420 L260 480 L400 380 L520 470 L640 410 L780 500 L900 430 L1020 500 L1160 400 L1290 470 L1440 410 V640 H0 Z"
+        fill="#1d5c66"
+      />
+      <path
+        d="M0 560 L180 480 L300 530 L460 450 L600 520 L760 470 L900 540 L1080 470 L1240 530 L1440 480 V640 H0 Z"
+        fill="#0f3f4a"
+      />
+      <rect y="575" width="1440" height="65" fill="url(#hs-sea)" />
+      <g stroke="#ffd486" strokeOpacity="0.5" strokeWidth="2" strokeLinecap="round">
+        <path d="M1280 592 h100" />
+        <path d="M1300 606 h60" />
+        <path d="M1315 620 h30" />
+      </g>
+    </svg>
+  );
+}
+
 const STEPS = [
   {
     title: 'Upload the trip',
@@ -145,6 +212,7 @@ export function LandingPage() {
   return (
     <div className="landing">
       <section className="hero">
+        <HeroScene />
         <div>
           <p className="eyebrow">Wanderbook · your trips, bound beautifully</p>
           <h1>
