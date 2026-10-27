@@ -139,6 +139,19 @@ describe('moving photos between days', () => {
     expect(await photo(id)).toMatchObject({ dayDate: '2026-10-12', assignedBy: 'auto' });
   });
 
+  it('refuses a stale reset too, so undoing a reset is safe', async () => {
+    const id = await addPhoto('2026-10-12T10:00:00', KYOTO);
+    await asha
+      .put(`/api/books/${bookId}/photos/day`)
+      .send({ photoIds: [id], dayDate: '2026-10-14' });
+    const stale = await asha.post(`/api/books/${bookId}/photos/day-reset`).send({
+      photoIds: [id],
+      expect: { [id]: { dayDate: '2026-10-11', assignedBy: 'user' } },
+    });
+    expect(stale.status).toBe(409);
+    expect(await photo(id)).toMatchObject({ dayDate: '2026-10-14', assignedBy: 'user' });
+  });
+
   it('refuses a day that is not part of the trip', async () => {
     const id = await addPhoto('2026-10-12T10:00:00', KYOTO);
     const res = await asha

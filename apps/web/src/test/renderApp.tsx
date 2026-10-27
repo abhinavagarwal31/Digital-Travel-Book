@@ -68,6 +68,9 @@ export const JAPAN_BOOK = {
   defaultTz: 'Asia/Tokyo',
   destinations: ['Tokyo', 'Kyoto'],
   theme: { kind: 'preset', id: 'editorial', version: 1 },
+  days: [],
+  chapters: [],
+  chaptersEdited: false,
   createdAt: '2026-10-01T00:00:00.000Z',
   updatedAt: '2026-10-01T00:00:00.000Z',
 };

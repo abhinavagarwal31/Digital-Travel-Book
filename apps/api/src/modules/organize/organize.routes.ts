@@ -3,7 +3,7 @@ import {
   chaptersBodySchema,
   daySet,
   locationBodySchema,
-  photoIdsBodySchema,
+  resetDayBodySchema,
   setDayBodySchema,
   timeBodySchema,
   visibilityBodySchema,
@@ -11,6 +11,7 @@ import {
   isValidGps,
   type ChaptersBody,
   type LocationBody,
+  type ResetDayBody,
   type SetDayBody,
   type TimeBody,
   type VisibilityBody,
@@ -24,7 +25,7 @@ import { validateBody } from '../../lib/validate.ts';
 import { authUserId, requireAuth } from '../auth/requireAuth.ts';
 import type { SessionConfig } from '../auth/session.ts';
 import { BookModel, toBookDTO, type BookFields } from '../books/book.model.ts';
-import { PhotoModel } from '../photos/photo.model.ts';
+import { PhotoModel, type PhotoFields } from '../photos/photo.model.ts';
 import { diaryDates, reorganize, toOrganizable } from './organize.service.ts';
 
 const ACTIVE = { state: 'active' as const };
@@ -64,6 +65,25 @@ async function allowedDays(book: HydratedDocument<BookFields>, userId: string) {
   );
 }
 
+/** 409 and no change if any photo is no longer in the state the client expected. */
+function assertExpected(
+  photos: HydratedDocument<PhotoFields>[],
+  expect: SetDayBody['expect'],
+): void {
+  if (!expect) return;
+  const changed = photos
+    .filter((p) => {
+      const expected = expect[p.id];
+      return expected && (expected.dayDate !== p.dayDate || expected.assignedBy !== p.assignedBy);
+    })
+    .map((p) => p.id);
+  if (changed.length > 0) {
+    throw new AppError(409, 'CONFLICT', 'These photos changed since you last saw them', {
+      photoIds: changed,
+    });
+  }
+}
+
 export function createOrganizeRouter(config: SessionConfig): Router {
   const router = express.Router();
   const auth = requireAuth(config);
@@ -89,21 +109,7 @@ export function createOrganizeRouter(config: SessionConfig): Router {
         ]);
       }
 
-      if (body.expect) {
-        const changed = photos
-          .filter((p) => {
-            const expected = body.expect?.[p.id];
-            return (
-              expected && (expected.dayDate !== p.dayDate || expected.assignedBy !== p.assignedBy)
-            );
-          })
-          .map((p) => p.id);
-        if (changed.length > 0) {
-          throw new AppError(409, 'CONFLICT', 'These photos changed since you last saw them', {
-            photoIds: changed,
-          });
-        }
-      }
+      assertExpected(photos, body.expect);
 
       await PhotoModel.updateMany(
         { _id: { $in: body.photoIds }, bookId: book._id, userId, status: 'ready' },
@@ -117,10 +123,11 @@ export function createOrganizeRouter(config: SessionConfig): Router {
   router.post(
     '/books/:bookId/photos/day-reset',
     auth,
-    validateBody(photoIdsBodySchema),
+    validateBody(resetDayBodySchema),
     async (req, res) => {
-      const { photoIds } = req.body as { photoIds: string[] };
-      const { userId, book } = await ownedPhotos(req, photoIds);
+      const { photoIds, expect } = req.body as ResetDayBody;
+      const { userId, book, photos } = await ownedPhotos(req, photoIds);
+      assertExpected(photos, expect);
       await PhotoModel.updateMany(
         { _id: { $in: photoIds }, bookId: book._id, userId },
         { $set: { assignedBy: 'auto' } },

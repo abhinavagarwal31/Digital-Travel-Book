@@ -30,7 +30,7 @@ export interface DayGroup {
 }
 
 // Sorts after any real "YYYY-MM-DDTHH:mm:ss", so photos without a time end each day.
-const AFTER_ANY_TIME = '\uffff';
+export const AFTER_ANY_TIME = '\uffff';
 
 /** Ready photos grouped by day in date order; photos without a day come last. */
 export function groupByDay(photos: Photo[]): DayGroup[] {

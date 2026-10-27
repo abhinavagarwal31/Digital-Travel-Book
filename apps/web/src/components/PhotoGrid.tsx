@@ -27,8 +27,8 @@ export function PhotoGrid({ photos, startDate }: { photos: Photo[]; startDate: s
           </header>
           {group.dayDate === null && (
             <p className="hint">
-              These photos have no usable date, or a date far outside the trip. You will be able to
-              place them in a day yourself.
+              These photos have no usable date, or a date far outside the trip. Use Sort photos to
+              place them in a day.
             </p>
           )}
           <ul className="photo-grid">

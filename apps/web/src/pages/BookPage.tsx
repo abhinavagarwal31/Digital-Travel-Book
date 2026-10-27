@@ -1,3 +1,4 @@
+import { sortingSummary } from '@tb/shared';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { BookCover } from '../components/BookCover.tsx';
@@ -27,6 +28,9 @@ export function BookPage() {
   }
 
   const b = book.data;
+  const ready = photos.data?.filter((p) => p.status === 'ready') ?? [];
+  const sorting = sortingSummary(ready);
+  const toDecide = sorting.toSort + sorting.toCheck;
 
   if (editing) {
     return (
@@ -91,10 +95,18 @@ export function BookPage() {
       <section className="stack" aria-labelledby="photos-heading">
         <div className="page-title">
           <h2 id="photos-heading">Photos</h2>
-          {photos.data && photos.data.length > 0 && (
-            <span className="muted">
-              {photos.data.filter((p) => p.status === 'ready').length} in this book
-            </span>
+          {ready.length > 0 && (
+            <div className="actions">
+              <span className="muted">{ready.length} in this book</span>
+              <Link to={`/books/${b.id}/sort`} className={`button${toDecide > 0 ? '' : ' ghost'}`}>
+                Sort photos
+                {toDecide > 0 && (
+                  <span className="count" aria-label={`, ${toDecide} need a decision`}>
+                    {toDecide}
+                  </span>
+                )}
+              </Link>
+            </div>
           )}
         </div>
         <PhotoUploader bookId={b.id} />

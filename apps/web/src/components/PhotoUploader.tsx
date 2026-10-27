@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useRef, useState, type DragEvent } from 'react';
 import { photosKey } from '../lib/photos.ts';
+import { useSorting } from '../lib/sorting.ts';
 import { uploadPhotos, type UploadItem, type UploadStatus } from '../lib/upload.ts';
 
 const LABELS: Record<UploadStatus, string> = {
@@ -17,6 +18,7 @@ let nextKey = 0;
 
 export function PhotoUploader({ bookId }: { bookId: string }) {
   const queryClient = useQueryClient();
+  const { organize } = useSorting(bookId);
   const input = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState<UploadItem[]>([]);
   const [dragging, setDragging] = useState(false);
@@ -32,7 +34,12 @@ export function PhotoUploader({ bookId }: { bookId: string }) {
     await uploadPhotos(bookId, batch, (key, patch) =>
       setItems((current) => current.map((i) => (i.key === key ? { ...i, ...patch } : i))),
     );
-    await queryClient.invalidateQueries({ queryKey: photosKey(bookId) });
+    // New photos can change days, stops and suggested chapters for the whole book.
+    try {
+      await organize.mutateAsync();
+    } catch {
+      await queryClient.invalidateQueries({ queryKey: photosKey(bookId) });
+    }
   }
 
   function onDrop(event: DragEvent) {

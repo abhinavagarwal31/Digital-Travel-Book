@@ -9,6 +9,7 @@ import { LibraryPage } from './pages/LibraryPage.tsx';
 import { NewBookPage } from './pages/NewBookPage.tsx';
 import { NotFoundPage } from './pages/NotFoundPage.tsx';
 import { ReaderPage } from './pages/ReaderPage.tsx';
+import { SortPage } from './pages/SortPage.tsx';
 
 /** "/" is the library for a logged-in user and the landing page for everyone else. */
 function Home() {
@@ -46,6 +47,14 @@ export function App() {
           element={
             <RequireAuth>
               <BookPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/books/:bookId/sort"
+          element={
+            <RequireAuth>
+              <SortPage />
             </RequireAuth>
           }
         />

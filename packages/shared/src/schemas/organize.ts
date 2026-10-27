@@ -5,6 +5,14 @@ import { MAX_PHOTOS_PER_BOOK } from './photo.ts';
 
 const photoIds = z.array(objectIdSchema).min(1).max(MAX_PHOTOS_PER_BOOK);
 
+/** The state the client believes each photo is in; any mismatch rejects the request (409). */
+const expectSchema = z
+  .record(
+    objectIdSchema,
+    z.strictObject({ dayDate: isoDateSchema.nullable(), assignedBy: z.enum(['auto', 'user']) }),
+  )
+  .optional();
+
 /**
  * Move photos to a day (or deliberately to no day). `expect` is the state the
  * client believes each photo is in; if any differs, nothing changes (409).
@@ -14,16 +22,13 @@ export const setDayBodySchema = z
   .strictObject({
     photoIds,
     dayDate: isoDateSchema.nullable(),
-    expect: z
-      .record(
-        objectIdSchema,
-        z.strictObject({ dayDate: isoDateSchema.nullable(), assignedBy: z.enum(['auto', 'user']) }),
-      )
-      .optional(),
+    expect: expectSchema,
   })
   .refine((b) => new Set(b.photoIds).size === b.photoIds.length, 'Duplicate photo ids');
 
 export const photoIdsBodySchema = z.strictObject({ photoIds });
+
+export const resetDayBodySchema = z.strictObject({ photoIds, expect: expectSchema });
 
 export const visibilityBodySchema = z.strictObject({ photoIds, hidden: z.boolean() });
 
@@ -71,6 +76,7 @@ export const chaptersBodySchema = z
   });
 
 export type SetDayBody = z.infer<typeof setDayBodySchema>;
+export type ResetDayBody = z.infer<typeof resetDayBodySchema>;
 export type VisibilityBody = z.infer<typeof visibilityBodySchema>;
 export type LocationBody = z.infer<typeof locationBodySchema>;
 export type TimeBody = z.infer<typeof timeBodySchema>;
