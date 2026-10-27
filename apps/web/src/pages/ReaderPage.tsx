@@ -140,6 +140,8 @@ export function ReaderPage() {
           riffleOrigin={flip.riffleOrigin}
           onNext={flip.next}
           onPrev={flip.prev}
+          onSettle={flip.settle}
+          reducedMotion={flip.reducedMotion}
           label={b.title}
           renderPage={(index) => {
             const page = pages[index];

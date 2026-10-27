@@ -1,6 +1,7 @@
 import { useId, useLayoutEffect, useRef, type ReactNode } from 'react';
 import {
   clipPath,
+  constrainCorner,
   cornerAlongTurn,
   curlAt,
   type Corner,
@@ -10,8 +11,16 @@ import {
 } from '../../lib/curl.ts';
 import type { FlipMode } from '../../lib/flip.ts';
 
+/**
+ * Where the page's corner is at a moment, and whether the turn is over. The
+ * default is a timed turn; a drag passes one that follows the pointer.
+ */
+export type CornerDriver = (now: number, W: number, H: number) => { corner: Vec; done: boolean };
+
 interface CurlLeafProps {
   direction: Direction;
+  /** Overrides the timed turn: e.g. a hand dragging the corner. */
+  driver?: CornerDriver;
   mode: FlipMode;
   duration: number;
   /** The face lying flat when the turn starts, and the one revealed as it folds over. */
@@ -41,6 +50,7 @@ export function CurlLeaf({
   lyingSide,
   zIndex,
   corner = 'bottom',
+  driver,
 }: CurlLeafProps) {
   const root = useRef<HTMLDivElement>(null);
   const lyingEl = useRef<HTMLDivElement>(null);
@@ -110,19 +120,26 @@ export function CurlLeaf({
       sheenGradient.current?.setAttribute('y2', String(mid.y + n.y * extent));
     };
 
+    const timed: CornerDriver = (now, W, H) => {
+      const t = Math.min(1, (now - start) / duration);
+      return { corner: cornerAlongTurn(t, direction, corner, W, H), done: t >= 1 };
+    };
+    const where = driver ?? timed;
+
     const tick = (now: number) => {
       const width = box.offsetWidth;
       const H = box.offsetHeight;
       const W = mode === 'double' ? width / 2 : width;
       const spineX = mode === 'double' ? W : 0;
-      const t = Math.min(1, (now - start) / duration);
-      draw(curlAt(cornerAlongTurn(t, direction, corner, W, H), direction, corner, W, H), W, spineX);
-      if (t < 1) frame = requestAnimationFrame(tick);
+      const { corner: p, done } = where(now, W, H);
+      const held = constrainCorner(p, corner, W, H);
+      draw(curlAt(held, direction, corner, W, H), W, spineX);
+      if (!done) frame = requestAnimationFrame(tick);
     };
     // The first frame is drawn before the browser paints, so nothing flashes.
     tick(start);
     return () => cancelAnimationFrame(frame);
-  }, [direction, mode, duration, corner]);
+  }, [direction, mode, duration, corner, driver]);
 
   const otherSide = lyingSide === 'front' ? 'back' : 'front';
   return (

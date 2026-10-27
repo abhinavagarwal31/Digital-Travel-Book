@@ -2,6 +2,7 @@ import { Fragment, useRef, type CSSProperties, type PointerEvent, type ReactNode
 import { leafPages, leafZIndex, visiblePages, type FlipMode } from '../../lib/flip.ts';
 import { CurlLeaf } from './CurlLeaf.tsx';
 import { FLIP_MS } from './useFlipBook.ts';
+import { usePageDrag } from './usePageDrag.ts';
 
 interface FlipBookProps {
   pageCount: number;
@@ -14,6 +15,10 @@ interface FlipBookProps {
   renderPage: (index: number) => ReactNode;
   onNext: () => void;
   onPrev: () => void;
+  /** Completes a turn already animated by hand (a drag). */
+  onSettle: (direction: 1 | -1) => void;
+  /** No dragging or curling when the reader prefers less motion. */
+  reducedMotion: boolean;
   label: string;
 }
 
@@ -49,9 +54,24 @@ export function FlipBook(props: FlipBookProps) {
     renderPage,
     onNext,
     onPrev,
+    onSettle,
+    reducedMotion,
     label,
   } = props;
   const pointer = useRef<{ x: number; y: number } | null>(null);
+  // The covers (and the endpapers glued to them) are stiff boards.
+  const isHard = (leaf: number) => {
+    const [front, back] = leafPages(leaf, pageCount, mode);
+    return front === 0 || front === pageCount - 1 || back === pageCount - 1;
+  };
+  const hand = usePageDrag({
+    mode,
+    turned,
+    total,
+    isHard,
+    enabled: !reducedMotion && flights.size === 0,
+    onTurned: onSettle,
+  });
   const visible = visiblePages(turned, pageCount, mode);
   // During a riffle the pages where it started are still on show beneath the
   // leaves in flight, so they keep their content until every leaf has landed.
@@ -62,13 +82,16 @@ export function FlipBook(props: FlipBookProps) {
   const offset =
     mode === 'double' ? (turned === 0 ? '-25%' : turned === total ? '25%' : '0%') : '0%';
 
-  function onPointerDown(event: PointerEvent) {
+  function onPointerDown(event: PointerEvent<HTMLDivElement>) {
     pointer.current = { x: event.clientX, y: event.clientY };
+    hand.down(event);
   }
 
   function onPointerUp(event: PointerEvent<HTMLDivElement>) {
     const start = pointer.current;
     pointer.current = null;
+    // A page carried by hand lands (or settles back) by itself.
+    if (hand.up()) return;
     if (!start) return;
     const dx = event.clientX - start.x;
     if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(event.clientY - start.y)) {
@@ -85,7 +108,7 @@ export function FlipBook(props: FlipBookProps) {
 
   return (
     <div
-      className={`flipbook ${mode}`}
+      className={`flipbook ${mode}${hand.drag ? ' dragging' : ''}`}
       data-state={
         mode === 'double' && turned === 0 ? 'closed' : turned === total ? 'finished' : 'open'
       }
@@ -94,7 +117,12 @@ export function FlipBook(props: FlipBookProps) {
       aria-roledescription="book"
       aria-label={label}
       onPointerDown={onPointerDown}
+      onPointerMove={hand.move}
       onPointerUp={onPointerUp}
+      onPointerCancel={() => {
+        pointer.current = null;
+        hand.up(true);
+      }}
     >
       {/* The hard case the pages are bound into, and the thickness of the pages on each side. */}
       <div className="book-case" aria-hidden="true" />
@@ -117,9 +145,10 @@ export function FlipBook(props: FlipBookProps) {
         const flight = flights.get(leaf);
         const near = nearAny(leaf) || flight !== undefined;
         const shown = visible.includes(front) || (back !== null && visible.includes(back));
-        // The covers (and the endpapers glued to them) are stiff boards.
-        const hard = front === 0 || front === pageCount - 1 || back === pageCount - 1;
-        const curling = flight !== undefined && !hard;
+        const hard = isHard(leaf);
+        const held = hand.drag?.leaf === leaf ? hand.drag : null;
+        const curling = (flight !== undefined && !hard) || held !== null;
+        const direction = held?.direction ?? flight ?? 1;
         const backFace = back === null ? <div className="page blank" /> : renderPage(back);
         return (
           <Fragment key={leaf}>
@@ -143,13 +172,15 @@ export function FlipBook(props: FlipBookProps) {
             </div>
             {curling && (
               <CurlLeaf
-                direction={flight}
+                direction={direction}
                 mode={mode}
                 duration={FLIP_MS}
-                zIndex={leafZIndex(leaf, turned, total, { direction: flight })}
-                lyingSide={flight === 1 ? 'front' : 'back'}
-                lying={flight === 1 ? renderPage(front) : backFace}
-                other={flight === 1 ? backFace : renderPage(front)}
+                driver={held?.driver}
+                corner={held?.corner}
+                zIndex={leafZIndex(leaf, turned, total, { direction })}
+                lyingSide={direction === 1 ? 'front' : 'back'}
+                lying={direction === 1 ? renderPage(front) : backFace}
+                other={direction === 1 ? backFace : renderPage(front)}
               />
             )}
           </Fragment>

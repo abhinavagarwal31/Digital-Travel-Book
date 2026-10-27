@@ -1034,3 +1034,7 @@
   left: 0;
   width: 100%;
 }
+
+.flipbook.dragging {
+  cursor: grabbing;
+}

@@ -75,6 +75,18 @@ export function useFlipBook(pageCount: number) {
 
   const stopRiffle = () => window.clearTimeout(riffle.current);
 
+  /** Completes a turn the reader made by hand: it has already been animated. */
+  const settle = useCallback(
+    (direction: 1 | -1) => {
+      stopRiffle();
+      const next = turnedRef.current + direction;
+      if (next < 0 || next > total) return;
+      turnedRef.current = next;
+      setTurned(next);
+    },
+    [total],
+  );
+
   const next = useCallback(() => {
     stopRiffle();
     step(1);
@@ -109,5 +121,16 @@ export function useFlipBook(pageCount: number) {
     [mode, total, reducedMotion, step],
   );
 
-  return { mode, total, turned, flights, riffleOrigin, next, prev, goToPage };
+  return {
+    mode,
+    total,
+    turned,
+    flights,
+    riffleOrigin,
+    reducedMotion,
+    next,
+    prev,
+    settle,
+    goToPage,
+  };
 }
