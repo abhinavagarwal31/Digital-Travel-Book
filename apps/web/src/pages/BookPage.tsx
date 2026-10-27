@@ -60,7 +60,7 @@ export function BookPage() {
       </Link>
 
       <div className="book-hero">
-        <BookCover book={b} />
+        <BookCover book={b} animate="always" />
         <div className="stack" style={{ gap: '0.9rem' }}>
           <p className="eyebrow">Travel book</p>
           <h1>{b.title}</h1>

@@ -121,6 +121,6 @@ it('prints the chosen photo on the cover of the book', async () => {
   const book = { ...JAPAN_BOOK, overrides: { coverPhotoId: 'b', dayLayouts: [], photoOrder: [] } };
   open(`/books/${BOOK}/read`, book, [photo('a'), photo('b')]);
   await screen.findByRole('heading', { name: JAPAN_BOOK.title, level: 1 });
-  const cover = document.querySelector('.cover-page.with-photo .cover-photo');
+  const cover = document.querySelector('.comic-cover.with-photo .comic-photo');
   expect(cover?.getAttribute('src')).toContain('/photos/b/image/page');
 });

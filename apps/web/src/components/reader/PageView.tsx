@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import { formatDateRange, formatTripLength } from '../../lib/dates.ts';
 import { photoImageUrl } from '../../lib/photos.ts';
 import { coverColour } from '../BookCover.tsx';
+import { ComicBackCover, ComicCover, comicColour } from '../ComicCover.tsx';
 import { RouteMapView } from './RouteMapView.tsx';
 
 const longDate = new Intl.DateTimeFormat('en-GB', {
@@ -46,30 +47,21 @@ interface PageViewProps {
 
 /** One page of the book. Every word on it comes from the user's own data. */
 export function PageView({ page, index, book, theme, ownerName }: PageViewProps) {
-  const cover = { '--cover': theme.colors.cover ?? coverColour(book.id) } as CSSProperties;
+  const coverInk = theme.colors.cover ?? coverColour(book.id);
+  const cover = { '--cover': coverInk } as CSSProperties;
   const number = <span className="page-number">{index}</span>;
 
   switch (page.kind) {
     case 'cover':
       return (
-        <div className={`page cover-page${page.photoId ? ' with-photo' : ''}`} style={cover}>
-          {page.photoId && (
-            <img
-              className="cover-photo"
-              src={photoImageUrl(page.photoId, 'page')}
-              alt=""
-              draggable={false}
-            />
-          )}
-          <div className="cover-frame">
-            <span className="cover-rule" />
-            <h1>{book.title}</h1>
-            <span className="cover-rule" />
-            <p className="cover-dates">{formatDateRange(book.startDate, book.endDate)}</p>
-            {book.destinations.length > 0 && (
-              <p className="cover-places">{book.destinations.join(' · ')}</p>
-            )}
-          </div>
+        <div className="page cover-page" style={cover}>
+          <ComicCover
+            title={book.title}
+            dates={formatDateRange(book.startDate, book.endDate)}
+            places={book.destinations}
+            colour={comicColour(book.id)}
+            photoUrl={page.photoId ? photoImageUrl(page.photoId, 'page') : null}
+          />
         </div>
       );
 
@@ -235,9 +227,7 @@ export function PageView({ page, index, book, theme, ownerName }: PageViewProps)
     case 'back-cover':
       return (
         <div className="page cover-page back-cover" style={cover}>
-          <span className="closing-mark" aria-hidden="true">
-            ✦
-          </span>
+          <ComicBackCover colour={comicColour(book.id)} />
         </div>
       );
   }

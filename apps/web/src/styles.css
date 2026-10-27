@@ -470,34 +470,6 @@ textarea[aria-invalid='true'] {
   box-shadow: var(--shadow-lg);
 }
 
-.cover .ornament {
-  width: 38px;
-  height: 2px;
-  background: currentColor;
-  opacity: 0.6;
-  margin-bottom: 1rem;
-}
-
-.cover h2 {
-  font-size: clamp(1.15rem, 0.9rem + 0.9vw, 1.55rem);
-  line-height: 1.12;
-}
-
-.cover .cover-meta {
-  margin-top: auto;
-  font-size: 0.8rem;
-  letter-spacing: 0.02em;
-  opacity: 0.85;
-}
-
-.cover .cover-places {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: 0.9rem;
-  opacity: 0.9;
-  margin-top: 0.35rem;
-}
-
 .cover.blank {
   background: transparent;
   color: var(--muted);
@@ -1642,4 +1614,356 @@ textarea[aria-invalid='true'] {
   margin-top: 2rem;
   text-align: center;
   justify-items: center;
+}
+
+/* ---------- Comic covers ----------
+   A travel book's cover as a comic panel. Every size is in cqw of the cover,
+   so the shelf and the book share one design. */
+
+.comic-cover {
+  --ink: #15110d;
+  --pop: #ffd23f;
+  --gutter: #fff6e3;
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  container-type: inline-size;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle at 50% 44%,
+    color-mix(in srgb, var(--cover) 55%, #fff4d6) 0%,
+    var(--cover) 52%,
+    color-mix(in srgb, var(--cover) 70%, #000) 100%
+  );
+  color: var(--ink);
+  font-family: 'Bangers', Impact, 'Arial Black', sans-serif;
+  font-weight: 400;
+}
+
+/* The panel: a cream gutter and a heavy ink border, drawn over everything. */
+.comic-cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  border: 3.2cqw solid var(--gutter);
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1.1cqw var(--ink);
+}
+
+.comic-cover .comic-photo {
+  position: absolute;
+  inset: -1px;
+  width: calc(100% + 2px);
+  height: calc(100% + 2px);
+  max-width: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  rotate: none;
+  object-fit: cover;
+  filter: saturate(1.35) contrast(1.12);
+}
+
+.comic-rays {
+  position: absolute;
+  left: 50%;
+  top: 47%;
+  width: 170cqw;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  background: repeating-conic-gradient(rgb(255 255 255 / 0.22) 0 6deg, transparent 6deg 15deg);
+  mask-image: radial-gradient(circle, #000 18%, transparent 60%);
+  animation: comic-spin 70s linear infinite;
+}
+
+.comic-cover.with-photo .comic-rays {
+  opacity: 0.4;
+}
+
+.comic-halftone {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgb(0 0 0 / 0.3) 0.34cqw, transparent 0.45cqw) 0 0 / 2.4cqw
+    2.4cqw;
+  mask-image: linear-gradient(160deg, transparent 25%, #000 90%);
+  mix-blend-mode: multiply;
+}
+
+.comic-cover.with-photo .comic-halftone {
+  mask-image: none;
+  opacity: 0.45;
+}
+
+.comic-sky {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.comic-cloud path,
+.comic-plane path {
+  fill: #fffdf6;
+  stroke: var(--ink);
+  stroke-width: 2.4;
+  stroke-linejoin: round;
+}
+
+.comic-plane path {
+  stroke-width: 1.6;
+}
+
+.comic-sun {
+  fill: var(--pop);
+  stroke: var(--ink);
+  stroke-width: 2.6;
+}
+
+.comic-hill {
+  stroke: var(--ink);
+  stroke-width: 2.6;
+  stroke-linejoin: round;
+}
+
+.comic-hill.far {
+  fill: #79c26b;
+}
+
+.comic-hill.near {
+  fill: #3f9150;
+}
+
+.comic-route {
+  fill: none;
+  stroke: var(--gutter);
+  stroke-width: 2.4;
+  stroke-dasharray: 1 7;
+  stroke-linecap: round;
+}
+
+/* The plane flies the route: steadily across, rising then dipping, nose following. */
+.comic-plane-x {
+  animation: comic-fly-x 9s linear infinite;
+}
+
+.comic-plane-y {
+  animation: comic-fly-y 9s linear infinite;
+}
+
+.drift-a {
+  animation: comic-drift 13s ease-in-out infinite alternate;
+}
+
+.drift-b {
+  animation: comic-drift 17s ease-in-out infinite alternate-reverse;
+}
+
+.comic-caption {
+  position: absolute;
+  top: 7cqw;
+  left: 7cqw;
+  z-index: 2;
+  margin: 0;
+  padding: 1.1cqw 2.6cqw 0.7cqw;
+  background: var(--gutter);
+  border: 0.8cqw solid var(--ink);
+  box-shadow: 1.2cqw 1.2cqw 0 var(--ink);
+  font-size: 4.6cqw;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  rotate: -3deg;
+}
+
+/* Doubled class: stronger than the book's own heading colours. */
+.comic-cover .comic-title {
+  position: absolute;
+  left: 7cqw;
+  right: 7cqw;
+  top: 50%;
+  z-index: 2;
+  margin: 0;
+  translate: 0 -50%;
+  rotate: -5deg;
+  text-align: center;
+  font-family: inherit;
+  font-weight: 400;
+  font-size: var(--title-size);
+  line-height: 0.95;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+  color: var(--pop);
+  -webkit-text-stroke: 1.1cqw var(--ink);
+  paint-order: stroke fill;
+  text-shadow: 1.2cqw 1.3cqw 0 var(--ink);
+  animation: comic-pop 800ms cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+
+.comic-bottom {
+  position: absolute;
+  left: 7cqw;
+  right: 7cqw;
+  bottom: 7.5cqw;
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2cqw;
+}
+
+.comic-stamps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 62%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2.2cqw 2cqw;
+}
+
+/* Passport stamps: double-ruled, inked a little unevenly, pressed at an angle. */
+.comic-stamps li {
+  padding: 0.9cqw 1.8cqw 0.5cqw;
+  border: 0.55cqw solid var(--stamp);
+  outline: 0.3cqw solid var(--stamp);
+  outline-offset: 0.55cqw;
+  border-radius: 1cqw;
+  background: rgb(255 250 235 / 0.88);
+  color: var(--stamp);
+  font-size: 3.8cqw;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  rotate: var(--tilt);
+  opacity: 0.92;
+}
+
+.comic-dates {
+  margin: 0;
+  padding: 1.2cqw 2.4cqw 0.8cqw;
+  background: var(--pop);
+  border: 0.8cqw solid var(--ink);
+  box-shadow: 1.2cqw 1.2cqw 0 var(--ink);
+  font-size: 4.2cqw;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  rotate: 2deg;
+}
+
+.comic-cover .comic-the-end {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  font-size: 17cqw;
+  text-transform: uppercase;
+  color: var(--pop);
+  -webkit-text-stroke: 1.2cqw var(--ink);
+  paint-order: stroke fill;
+  text-shadow: 1.4cqw 1.5cqw 0 var(--ink);
+  rotate: -6deg;
+}
+
+/* On a shelf, only the cover being pointed at comes to life; titles there
+   are simply printed, without popping in. */
+.comic-cover[data-animate='hover'] .comic-title {
+  animation: none;
+}
+
+.comic-cover[data-animate='hover'],
+.comic-cover[data-animate='hover'] * {
+  animation-play-state: paused;
+}
+
+.cover-link:hover .comic-cover[data-animate='hover'],
+.cover-link:hover .comic-cover[data-animate='hover'] *,
+.cover-link:focus-visible .comic-cover[data-animate='hover'] * {
+  animation-play-state: running;
+}
+
+@keyframes comic-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@keyframes comic-fly-x {
+  from {
+    transform: translateX(-30px);
+  }
+  to {
+    transform: translateX(330px);
+  }
+}
+
+@keyframes comic-fly-y {
+  0% {
+    transform: translateY(160px) rotate(-30deg);
+  }
+  25% {
+    transform: translateY(108px) rotate(-18deg);
+  }
+  50% {
+    transform: translateY(84px) rotate(-2deg);
+  }
+  75% {
+    transform: translateY(94px) rotate(12deg);
+  }
+  100% {
+    transform: translateY(134px) rotate(22deg);
+  }
+}
+
+@keyframes comic-drift {
+  from {
+    transform: translateX(-10px);
+  }
+  to {
+    transform: translateX(14px);
+  }
+}
+
+@keyframes comic-pop {
+  0% {
+    scale: 0.4;
+    opacity: 0;
+  }
+  70% {
+    scale: 1.08;
+    opacity: 1;
+  }
+  100% {
+    scale: 1;
+  }
+}
+
+/* Still, for those who prefer it: the plane parked mid-route. */
+@media (prefers-reduced-motion: reduce) {
+  .comic-cover,
+  .comic-cover * {
+    animation: none !important;
+  }
+
+  .comic-plane-x {
+    transform: translateX(170px);
+  }
+
+  .comic-plane-y {
+    transform: translateY(86px) rotate(-2deg);
+  }
+}
+
+/* A comic cover fills the cloth cover's box on shelves and the book page. */
+.cover.comic {
+  padding: 0;
+  background: var(--cover);
+}
+
+.cover.comic::after {
+  display: none;
 }
