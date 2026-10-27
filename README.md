@@ -2,7 +2,7 @@
 
 Turn a trip's photos into a private, organised travel book with real turning pages.
 
-**Live app:** https://wanderbook-7rnn.onrender.com · **Repository:** https://github.com/abhinavagarwal31/Wanderbook
+**Live app:** https://wanderbook-7rnn.onrender.com · **Repository:** https://github.com/abhinavagarwal31/Wanderbook · **Demo video (2 min):** https://drive.google.com/file/d/13EmxDAAScIpNv8HU9zugLwauUxRAg94o/view?usp=sharing
 
 **Demo account** (a sample 6-day Japan trip, already uploaded and organised):
 
