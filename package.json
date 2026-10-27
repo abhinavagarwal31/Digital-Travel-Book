@@ -10,6 +10,7 @@
     "apps/*"
   ],
   "scripts": {
+    "dev:db": "mkdir -p .local-db && mongod --dbpath .local-db --port 27017 --bind_ip 127.0.0.1 --quiet",
     "dev:api": "npm run dev -w @tb/api",
     "dev:web": "npm run dev -w @tb/web",
     "build": "npm run build -w @tb/web",

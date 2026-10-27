@@ -23,14 +23,16 @@ TypeScript runs directly on Node 24 (type stripping), so the API and shared pack
 npm install
 cp .env.example .env # then fill in real values
 
-# development: two terminals, open http://localhost:5173
-npm run dev:api      # API on :3000 (needs MongoDB)
+# development: three terminals, open http://localhost:5173
+npm run dev:db       # MongoDB on :27017, data in .local-db/ (git-ignored)
+npm run dev:api      # API on :3000; photos go to .local-storage/ until Cloudinary is set
 npm run dev:web      # Vite on :5173, proxies /api to :3000
 
 # production: one process serves the app and the API
 npm run build && NODE_ENV=production npm start
 
 npm run check        # typecheck + lint + format check + tests
+npm run test:integration  # real-account Cloudinary checks (reads .env.production.local)
 npm test             # tests only
 npm run format       # apply Prettier
 ```

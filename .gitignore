@@ -21,3 +21,5 @@ private-fixtures/
 # OS / editor
 .DS_Store
 *.log
+# development-only local database (npm run dev:db)
+.local-db/
