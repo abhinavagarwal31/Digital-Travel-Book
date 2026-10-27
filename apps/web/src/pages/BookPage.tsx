@@ -7,7 +7,7 @@ import { PhotoGrid } from '../components/PhotoGrid.tsx';
 import { PhotoUploader } from '../components/PhotoUploader.tsx';
 import { ThemePicker } from '../components/ThemePicker.tsx';
 import { ApiRequestError } from '../lib/api.ts';
-import { useBook, useDeleteBook, useUpdateBook } from '../lib/books.ts';
+import { useBook, useDeleteBook, useSetCover, useUpdateBook } from '../lib/books.ts';
 import { formatDateRange, formatTripLength } from '../lib/dates.ts';
 import { usePhotos } from '../lib/photos.ts';
 import { NotFoundPage } from './NotFoundPage.tsx';
@@ -17,6 +17,7 @@ export function BookPage() {
   const book = useBook(bookId);
   const updateBook = useUpdateBook(bookId);
   const deleteBook = useDeleteBook(bookId);
+  const setCover = useSetCover(bookId);
   const photos = usePhotos(bookId);
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
@@ -119,7 +120,19 @@ export function BookPage() {
         </div>
         <PhotoUploader bookId={b.id} />
         {photos.isError && <p role="alert">Could not load the photos. Try reloading the page.</p>}
-        {photos.data && <PhotoGrid photos={photos.data} startDate={b.startDate} />}
+        {setCover.isError && (
+          <p role="alert" className="form-error">
+            Could not change the cover. Try again.
+          </p>
+        )}
+        {photos.data && (
+          <PhotoGrid
+            photos={photos.data}
+            startDate={b.startDate}
+            coverPhotoId={b.overrides.coverPhotoId}
+            onSetCover={(photoId) => setCover.mutate(photoId)}
+          />
+        )}
       </section>
 
       <ThemePicker book={b} />

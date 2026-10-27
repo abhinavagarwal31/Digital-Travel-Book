@@ -1,4 +1,4 @@
-import type { Book, CreateBookBody, ThemeId, UpdateBookBody } from '@tb/shared';
+import type { Book, CreateBookBody, PhotoLayout, ThemeId, UpdateBookBody } from '@tb/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from './api.ts';
 
@@ -69,5 +69,31 @@ export function useSetTheme(id: string) {
       queryClient.setQueryData(bookKey(id), book);
       void queryClient.invalidateQueries({ queryKey: BOOKS_KEY, exact: true });
     },
+  });
+}
+
+/** Chooses the cover photo, or null for the plain cloth cover. */
+export function useSetCover(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (photoId: string | null) =>
+      (await apiFetch<{ book: Book }>(`/books/${id}/cover`, { method: 'PUT', json: { photoId } }))
+        .book,
+    onSuccess: (book) => queryClient.setQueryData(bookKey(id), book),
+  });
+}
+
+/** Chooses how many photos share a page on one day, or null to follow the theme. */
+export function useSetDayLayout(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ date, layout }: { date: string; layout: PhotoLayout | null }) =>
+      (
+        await apiFetch<{ book: Book }>(`/books/${id}/day-layouts/${date}`, {
+          method: 'PUT',
+          json: { layout },
+        })
+      ).book,
+    onSuccess: (book) => queryClient.setQueryData(bookKey(id), book),
   });
 }

@@ -2,13 +2,17 @@ import { computeStops, type Stop } from '../organize/stops.ts';
 import { contentDays, resolveChapters } from '../organize/structure.ts';
 import { DEFAULT_ORGANIZE_CONFIG, type Chapter, type OrganizablePhoto } from '../organize/types.ts';
 import { tripLengthDays } from '../schemas/book.ts';
-import { LAYOUT_CAPACITY, type ThemeDefinition } from '../themes/definition.ts';
+import { LAYOUT_CAPACITY, type PhotoLayout, type ThemeDefinition } from '../themes/definition.ts';
 import { chapterRouteMap, tripRouteMap, type RouteMap } from './maps.ts';
 import { DIARY_BUDGET, paginateText } from './paginate.ts';
 
 /** The book's pages, derived from travel data on every render and never stored. */
 export type BookPage =
-  | { kind: 'cover' }
+  | {
+      kind: 'cover';
+      /** The owner's chosen cover photo, or null for the plain cloth cover. */
+      photoId: string | null;
+    }
   | { kind: 'endpaper' }
   | { kind: 'title' }
   | {
@@ -68,6 +72,10 @@ export interface ComposableBook {
   days: { date: string; diary: string }[];
   /** The stored chapters. With none, the days follow the title page directly. */
   chapters: Chapter[];
+  overrides: {
+    coverPhotoId: string | null;
+    dayLayouts: { date: string; layout: PhotoLayout }[];
+  };
 }
 
 /**
@@ -152,7 +160,8 @@ function dayPages(
  * trip (when two or more chapters have places on it), then each chapter: an
  * opener with its own map, then its days: an opener (the first photo as
  * hero), the diary, and the remaining photos in time order. Then a closing page
- * and the back cover. The theme decides how many photos share a page. Like a printed book it has an even number of pages, so
+ * and the back cover. The theme decides how many photos share a page, unless
+ * the owner chose a layout for that day the theme also offers. Like a printed book it has an even number of pages, so
  * the back cover is always the back of the last leaf.
  *
  * Photos without a day, hidden photos and photos still uploading are left
@@ -164,7 +173,13 @@ export function composeBook(
   photos: ComposablePhoto[],
   theme: ThemeDefinition,
 ): BookPage[] {
-  const perPage = LAYOUT_CAPACITY[theme.photos.defaultLayout];
+  // A day's own layout applies only if this theme offers it; otherwise the theme's default.
+  const allowed = new Set<PhotoLayout>(theme.photos.layouts);
+  const dayLayouts = new Map(
+    book.overrides.dayLayouts.filter((d) => allowed.has(d.layout)).map((d) => [d.date, d.layout]),
+  );
+  const perPage = (dayDate: string) =>
+    LAYOUT_CAPACITY[dayLayouts.get(dayDate) ?? theme.photos.defaultLayout];
   const inBook = photos.filter((p) => p.status === 'ready' && !p.hidden && p.dayDate);
   const byDay = new Map<string, ComposablePhoto[]>();
   for (const photo of inBook) {
@@ -211,7 +226,15 @@ export function composeBook(
       : [],
   );
 
-  const pages: BookPage[] = [{ kind: 'cover' }, { kind: 'endpaper' }, { kind: 'title' }];
+  // A cover photo that has since been hidden, deleted or left out is ignored.
+  const coverPhotoId = inBook.some((p) => p.id === book.overrides.coverPhotoId)
+    ? book.overrides.coverPhotoId
+    : null;
+  const pages: BookPage[] = [
+    { kind: 'cover', photoId: coverPhotoId },
+    { kind: 'endpaper' },
+    { kind: 'title' },
+  ];
   const trip = tripRouteMap(
     chapters.map((c) => ({ id: c.chapter.id, number: c.number, stops: c.stops })),
   );
@@ -247,7 +270,9 @@ export function composeBook(
     for (const dayDate of section.days) {
       const dayPhotos = byDay.get(dayDate) ?? [];
       photoCount += dayPhotos.length;
-      pages.push(...dayPages(book, dayDate, dayPhotos, diaries.get(dayDate) ?? '', perPage));
+      pages.push(
+        ...dayPages(book, dayDate, dayPhotos, diaries.get(dayDate) ?? '', perPage(dayDate)),
+      );
     }
   }
 

@@ -1463,3 +1463,59 @@ textarea[aria-invalid='true'] {
   font-style: normal;
   font-size: 6.4cqw;
 }
+
+/* ---------- Cover choice and day layouts ---------- */
+
+.thumb {
+  position: relative;
+}
+
+.cover-toggle {
+  position: absolute;
+  top: 0.4rem;
+  left: 0.4rem;
+  padding: 0.2rem 0.55rem;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(20 16 12 / 0.72);
+  color: #fff;
+  font: 600 0.72rem var(--font-ui);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 150ms;
+}
+
+.thumb:hover .cover-toggle,
+.cover-toggle:focus-visible,
+.cover-toggle[aria-pressed='true'] {
+  opacity: 1;
+}
+
+.cover-toggle[aria-pressed='true'] {
+  background: var(--accent);
+}
+
+/* Touch screens have no hover: keep the button reachable. */
+@media (hover: none) {
+  .cover-toggle {
+    opacity: 1;
+  }
+}
+
+.write-day-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem 1rem;
+}
+
+.write-layout select {
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--ink);
+  background: var(--surface-sunk);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.3rem 0.8rem;
+}

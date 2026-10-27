@@ -1,5 +1,5 @@
-import type { Book, Chapter, ThemeId } from '@tb/shared';
-import { THEME_IDS } from '@tb/shared';
+import type { Book, Chapter, PhotoLayout, ThemeId } from '@tb/shared';
+import { PHOTO_LAYOUTS, THEME_IDS } from '@tb/shared';
 import mongoose, { type HydratedDocument, type Types } from 'mongoose';
 
 export interface BookFields {
@@ -18,6 +18,11 @@ export interface BookFields {
   chapters: Chapter[];
   /** Set once the user changes chapters: from then on they are never re-suggested. */
   chaptersEdited: boolean;
+  /** The owner's choices, keyed by photo id and date, never by page position. */
+  overrides: {
+    coverPhotoId: string | null;
+    dayLayouts: { date: string; layout: PhotoLayout }[];
+  };
   organizedAt: Date | null;
   // "deleting" hides the book while its photos and images are being removed.
   state: 'active' | 'deleting';
@@ -52,6 +57,19 @@ const bookSchema = new mongoose.Schema<BookFields>(
       default: [],
     },
     chaptersEdited: { type: Boolean, default: false },
+    overrides: {
+      _id: false,
+      coverPhotoId: { type: String, default: null },
+      dayLayouts: {
+        type: [
+          new mongoose.Schema(
+            { date: String, layout: { type: String, enum: PHOTO_LAYOUTS } },
+            { _id: false },
+          ),
+        ],
+        default: [],
+      },
+    },
     organizedAt: { type: Date, default: null },
     state: { type: String, enum: ['active', 'deleting'], default: 'active' },
   },
@@ -76,6 +94,14 @@ export function toBookDTO(book: HydratedDocument<BookFields>): Book {
     days: book.days.map((d) => ({ date: d.date, diary: d.diary })),
     chapters: book.chapters.map((c) => ({ id: c.id, title: c.title, dayDates: [...c.dayDates] })),
     chaptersEdited: book.chaptersEdited,
+    // Books saved before overrides existed have none.
+    overrides: {
+      coverPhotoId: book.overrides?.coverPhotoId ?? null,
+      dayLayouts: (book.overrides?.dayLayouts ?? []).map((d) => ({
+        date: d.date,
+        layout: d.layout,
+      })),
+    },
     createdAt: book.createdAt.toISOString(),
     updatedAt: book.updatedAt.toISOString(),
   };

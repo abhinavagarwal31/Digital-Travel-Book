@@ -17,7 +17,12 @@ const composeBook = (
   theme: ThemeDefinition = atlasV1,
 ) => composeWith(book, photos, theme);
 
-const BOOK: ComposableBook = { startDate: '2026-10-10', days: [], chapters: [] };
+const BOOK: ComposableBook = {
+  startDate: '2026-10-10',
+  days: [],
+  chapters: [],
+  overrides: { coverPhotoId: null, dayLayouts: [] },
+};
 
 let nextId = 0;
 function photo(
@@ -88,7 +93,7 @@ describe('composeBook', () => {
     const pages = composeBook(BOOK, [late, day1, mid, early]);
 
     expect(pages).toEqual([
-      { kind: 'cover' },
+      { kind: 'cover', photoId: null },
       { kind: 'endpaper' },
       { kind: 'title' },
       {
@@ -386,5 +391,49 @@ describe('composeBook with diaries and captions', () => {
       [photo('2026-10-10', '09:00:00')],
     );
     expect(pages.find((p) => p.kind === 'chapter')).toMatchObject({ dayCount: 2, photoCount: 1 });
+  });
+});
+
+describe("composeBook with the owner's choices", () => {
+  const overrides = (o: Partial<ComposableBook['overrides']>) => ({
+    ...BOOK,
+    overrides: { ...BOOK.overrides, ...o },
+  });
+
+  it('puts the chosen photo on the cover, and ignores it once it leaves the book', () => {
+    const a = photo('2026-10-10', '09:00:00');
+    const b = photo('2026-10-10', '10:00:00');
+    expect(composeBook(overrides({ coverPhotoId: b.id }), [a, b])[0]).toEqual({
+      kind: 'cover',
+      photoId: b.id,
+    });
+    for (const gone of [
+      [a, { ...b, hidden: true }],
+      [a, { ...b, dayDate: null }],
+      [a, { ...b, status: 'deleting' }],
+      [a],
+    ]) {
+      expect(composeBook(overrides({ coverPhotoId: b.id }), gone)[0]).toEqual({
+        kind: 'cover',
+        photoId: null,
+      });
+    }
+  });
+
+  it('lays out a day as chosen, when the theme offers that layout', () => {
+    const photos = Array.from({ length: 5 }, (_, i) => photo('2026-10-11', `0${i}:00:00`));
+    const sizes = (book: ComposableBook, theme: ThemeDefinition = atlasV1) =>
+      composeBook(book, photos, theme).flatMap((p) =>
+        p.kind === 'photos' ? [p.photoIds.length] : [],
+      );
+    const oneEach = overrides({ dayLayouts: [{ date: '2026-10-11', layout: 'hero-1' }] });
+    expect(sizes(oneEach)).toEqual([1, 1, 1, 1]);
+    // Another day's choice changes nothing here.
+    expect(sizes(overrides({ dayLayouts: [{ date: '2026-10-12', layout: 'hero-1' }] }))).toEqual([
+      4,
+    ]);
+    // Scrapbook has no four-photo layout, so a day set to it falls back to the theme's.
+    const fourUp = overrides({ dayLayouts: [{ date: '2026-10-11', layout: 'grid-4' }] });
+    expect(sizes(fourUp, scrapbookV1)).toEqual([2, 2]);
   });
 });

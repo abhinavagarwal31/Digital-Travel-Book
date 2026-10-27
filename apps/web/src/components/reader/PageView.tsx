@@ -52,7 +52,15 @@ export function PageView({ page, index, book, theme, ownerName }: PageViewProps)
   switch (page.kind) {
     case 'cover':
       return (
-        <div className="page cover-page" style={cover}>
+        <div className={`page cover-page${page.photoId ? ' with-photo' : ''}`} style={cover}>
+          {page.photoId && (
+            <img
+              className="cover-photo"
+              src={photoImageUrl(page.photoId, 'page')}
+              alt=""
+              draggable={false}
+            />
+          )}
           <div className="cover-frame">
             <span className="cover-rule" />
             <h1>{book.title}</h1>

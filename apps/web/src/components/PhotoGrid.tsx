@@ -9,7 +9,15 @@ const FLAG_LABELS: Record<string, string> = {
   gps_outlier: 'Check location',
 };
 
-export function PhotoGrid({ photos, startDate }: { photos: Photo[]; startDate: string }) {
+interface PhotoGridProps {
+  photos: Photo[];
+  startDate: string;
+  coverPhotoId?: string | null;
+  /** Makes a photo the cover, or (null) goes back to the plain cover. */
+  onSetCover?: (photoId: string | null) => void;
+}
+
+export function PhotoGrid({ photos, startDate, coverPhotoId, onSetCover }: PhotoGridProps) {
   const groups = groupByDay(photos);
   if (groups.length === 0) return null;
 
@@ -35,6 +43,18 @@ export function PhotoGrid({ photos, startDate }: { photos: Photo[]; startDate: s
             {group.photos.map((photo) => (
               <li key={photo.id}>
                 <figure className="thumb">
+                  {/* Only a photo that is in the book can be on its cover. */}
+                  {onSetCover && photo.dayDate && !photo.hidden && (
+                    <button
+                      type="button"
+                      className="cover-toggle"
+                      aria-pressed={photo.id === coverPhotoId}
+                      aria-label={`Use ${photo.originalFilename} as the cover`}
+                      onClick={() => onSetCover(photo.id === coverPhotoId ? null : photo.id)}
+                    >
+                      {photo.id === coverPhotoId ? '★ Cover' : '☆ Use as cover'}
+                    </button>
+                  )}
                   <img
                     src={photoImageUrl(photo.id, 'thumb')}
                     alt={photo.caption || photo.originalFilename}

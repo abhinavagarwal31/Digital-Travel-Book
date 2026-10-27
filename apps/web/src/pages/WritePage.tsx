@@ -2,17 +2,26 @@ import {
   daySet,
   MAX_CAPTION_LENGTH,
   MAX_DIARY_LENGTH,
+  resolveTheme,
   sortingSummary,
   type Photo,
+  type PhotoLayout,
 } from '@tb/shared';
 import { Link, useParams } from 'react-router';
 import { AutosaveField } from '../components/AutosaveField.tsx';
 import { ApiRequestError } from '../lib/api.ts';
-import { useBook } from '../lib/books.ts';
+import { useBook, useSetDayLayout } from '../lib/books.ts';
 import { formatDayHeading } from '../lib/dates.ts';
 import { useJournal } from '../lib/journal.ts';
 import { AFTER_ANY_TIME, photoImageUrl, usePhotos } from '../lib/photos.ts';
 import { NotFoundPage } from './NotFoundPage.tsx';
+
+const LAYOUT_LABELS: Record<PhotoLayout, string> = {
+  'hero-1': 'One photo a page',
+  'split-2': 'Two photos a page',
+  'mosaic-3': 'Three photos a page',
+  'grid-4': 'Four photos a page',
+};
 
 const byTime = (a: Photo, b: Photo) =>
   (a.localDateTime ?? AFTER_ANY_TIME).localeCompare(b.localDateTime ?? AFTER_ANY_TIME);
@@ -23,6 +32,7 @@ export function WritePage() {
   const book = useBook(bookId);
   const photos = usePhotos(bookId);
   const journal = useJournal(bookId);
+  const setLayout = useSetDayLayout(bookId);
 
   if (book.isPending || photos.isPending) return <p className="muted">Loading…</p>;
   if (book.isError) {
@@ -45,6 +55,8 @@ export function WritePage() {
     ready,
   );
   const unsorted = sortingSummary(ready).toSort;
+  const theme = resolveTheme(b.theme).definition;
+  const layoutOf = new Map(b.overrides.dayLayouts.map((d) => [d.date, d.layout]));
 
   return (
     <section className="stack write-page" style={{ gap: '1.5rem' }}>
@@ -68,13 +80,52 @@ export function WritePage() {
         </p>
       )}
 
+      {setLayout.isError && (
+        <p role="alert" className="form-error">
+          Could not change the layout. Try again.
+        </p>
+      )}
+
       <ol className="write-days">
         {days.map((day) => {
           const dayPhotos = inBook.filter((p) => p.dayDate === day).sort(byTime);
           const heading = formatDayHeading(day, b.startDate);
           return (
             <li key={day} className="card write-day">
-              <h2>{heading}</h2>
+              <div className="write-day-head">
+                <h2>{heading}</h2>
+                {/* Pages after the day's opener; only worth choosing with photos to spread. */}
+                {dayPhotos.length > 1 && (
+                  <label className="write-layout">
+                    <span className="visually-hidden">Photo layout for {heading}</span>
+                    <select
+                      value={
+                        theme.photos.layouts.includes(layoutOf.get(day) as PhotoLayout)
+                          ? layoutOf.get(day)
+                          : ''
+                      }
+                      disabled={setLayout.isPending}
+                      onChange={(event) =>
+                        setLayout.mutate({
+                          date: day,
+                          layout: (event.target.value || null) as PhotoLayout | null,
+                        })
+                      }
+                    >
+                      <option value="">
+                        {LAYOUT_LABELS[theme.photos.defaultLayout]} (style default)
+                      </option>
+                      {theme.photos.layouts
+                        .filter((l) => l !== theme.photos.defaultLayout)
+                        .map((l) => (
+                          <option key={l} value={l}>
+                            {LAYOUT_LABELS[l]}
+                          </option>
+                        ))}
+                    </select>
+                  </label>
+                )}
+              </div>
               <AutosaveField
                 label={`Diary for ${heading}`}
                 initial={diaryOf.get(day) ?? ''}

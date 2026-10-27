@@ -71,6 +71,7 @@ export const JAPAN_BOOK = {
   days: [],
   chapters: [],
   chaptersEdited: false,
+  overrides: { coverPhotoId: null, dayLayouts: [] },
   createdAt: '2026-10-01T00:00:00.000Z',
   updatedAt: '2026-10-01T00:00:00.000Z',
 };

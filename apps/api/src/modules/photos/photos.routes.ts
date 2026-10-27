@@ -296,6 +296,11 @@ export function createPhotosRouter(config: PhotosRouterConfig): Router {
       { _id: photo._id, userId },
       { $set: { status: 'deleting' }, $unset: { contentHash: 1 } },
     );
+    // A deleted photo stops being the cover (the book would ignore it anyway).
+    await BookModel.updateOne(
+      { _id: photo.bookId, userId, 'overrides.coverPhotoId': photo.id },
+      { $set: { 'overrides.coverPhotoId': null } },
+    );
     if (config.storage) {
       try {
         await config.storage.destroy(photo.storage.publicId);

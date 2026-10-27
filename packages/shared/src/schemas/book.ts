@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { isoDateSchema, timeZoneSchema } from './common.ts';
+import { PHOTO_LAYOUTS } from '../themes/definition.ts';
+import { isoDateSchema, objectIdSchema, timeZoneSchema } from './common.ts';
 
 /** Longest trip a book may span; bounds the number of days the app ever derives. */
 export const MAX_TRIP_DAYS = 366;
@@ -70,9 +71,20 @@ export const bookSchema = z.object({
   days: z.array(z.object({ date: z.string(), diary: z.string() })),
   chapters: z.array(z.object({ id: z.string(), title: z.string(), dayDates: z.array(z.string()) })),
   chaptersEdited: z.boolean(),
+  /** The owner's choices, keyed by stable ids and dates, never by page position. */
+  overrides: z.object({
+    coverPhotoId: z.string().nullable(),
+    dayLayouts: z.array(z.object({ date: z.string(), layout: z.enum(PHOTO_LAYOUTS) })),
+  }),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
+
+/** A photo of this book for the cover, or null for the plain cloth cover. */
+export const setCoverBodySchema = z.strictObject({ photoId: objectIdSchema.nullable() });
+
+/** A day's photo layout, or null to follow the theme. */
+export const setDayLayoutBodySchema = z.strictObject({ layout: z.enum(PHOTO_LAYOUTS).nullable() });
 
 /** Choosing a theme always picks its newest version. */
 export const setThemeBodySchema = z.strictObject({ id: z.enum(THEME_IDS) });
@@ -81,3 +93,5 @@ export type CreateBookBody = z.infer<typeof createBookBodySchema>;
 export type UpdateBookBody = z.infer<typeof updateBookBodySchema>;
 export type Book = z.infer<typeof bookSchema>;
 export type SetThemeBody = z.infer<typeof setThemeBodySchema>;
+export type SetCoverBody = z.infer<typeof setCoverBodySchema>;
+export type SetDayLayoutBody = z.infer<typeof setDayLayoutBodySchema>;
