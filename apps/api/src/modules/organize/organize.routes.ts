@@ -1,7 +1,6 @@
 import {
   captureFields,
   chaptersBodySchema,
-  daySet,
   locationBodySchema,
   resetDayBodySchema,
   setDayBodySchema,
@@ -24,9 +23,9 @@ import { timeZoneAt } from '../../lib/timeZoneAt.ts';
 import { validateBody } from '../../lib/validate.ts';
 import { authUserId, requireAuth } from '../auth/requireAuth.ts';
 import type { SessionConfig } from '../auth/session.ts';
-import { BookModel, toBookDTO, type BookFields } from '../books/book.model.ts';
+import { BookModel, toBookDTO } from '../books/book.model.ts';
 import { PhotoModel, type PhotoFields } from '../photos/photo.model.ts';
-import { diaryDates, reorganize, toOrganizable } from './organize.service.ts';
+import { allowedDays, reorganize } from './organize.service.ts';
 
 const ACTIVE = { state: 'active' as const };
 
@@ -48,21 +47,6 @@ async function ownedPhotos(req: Request, photoIds: string[]) {
   // All or nothing: one foreign, missing or unfinished id rejects the whole request.
   if (photos.length !== photoIds.length) throw notFound();
   return { userId, book, photos };
-}
-
-async function allowedDays(book: HydratedDocument<BookFields>, userId: string) {
-  const photos = await PhotoModel.find({ bookId: book._id, userId, status: 'ready' });
-  return new Set(
-    daySet(
-      {
-        startDate: book.startDate,
-        endDate: book.endDate,
-        diaryDates: diaryDates(book),
-        chapters: book.chapters,
-      },
-      photos.map(toOrganizable),
-    ),
-  );
 }
 
 /** 409 and no change if any photo is no longer in the state the client expected. */

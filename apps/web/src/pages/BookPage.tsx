@@ -68,6 +68,9 @@ export function BookPage() {
             <Link to={`/books/${b.id}/read`} className="button large">
               Open book
             </Link>
+            <Link to={`/books/${b.id}/write`} className="button ghost">
+              Write captions &amp; diary
+            </Link>
             <button type="button" className="button ghost" onClick={() => setEditing(true)}>
               Edit details
             </button>

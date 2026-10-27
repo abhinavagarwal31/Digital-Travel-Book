@@ -1,4 +1,10 @@
-import { organize, sortingSummary, type OrganizablePhoto, type SortingSummary } from '@tb/shared';
+import {
+  daySet,
+  organize,
+  sortingSummary,
+  type OrganizablePhoto,
+  type SortingSummary,
+} from '@tb/shared';
 import type { HydratedDocument } from 'mongoose';
 import { notFound } from '../../lib/ownership.ts';
 import { BookModel, type BookFields } from '../books/book.model.ts';
@@ -21,6 +27,22 @@ export function toOrganizable(photo: HydratedDocument<PhotoFields>): Organizable
 
 export function diaryDates(book: Pick<BookFields, 'days'>): string[] {
   return book.days.filter((d) => d.diary.trim() !== '').map((d) => d.date);
+}
+
+/** The book's days (see daySet): where photos and diary entries may go. */
+export async function allowedDays(book: HydratedDocument<BookFields>, userId: string) {
+  const photos = await PhotoModel.find({ bookId: book._id, userId, status: 'ready' });
+  return new Set(
+    daySet(
+      {
+        startDate: book.startDate,
+        endDate: book.endDate,
+        diaryDates: diaryDates(book),
+        chapters: book.chapters,
+      },
+      photos.map(toOrganizable),
+    ),
+  );
 }
 
 export interface Reorganized {

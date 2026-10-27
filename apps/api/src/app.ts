@@ -10,6 +10,7 @@ import type { ImageStorage } from './lib/storage.ts';
 import { serveWebApp } from './lib/webApp.ts';
 import { createAuthRouter, type AuthRateLimit } from './modules/auth/auth.routes.ts';
 import { createBooksRouter } from './modules/books/books.routes.ts';
+import { createJournalRouter } from './modules/journal/journal.routes.ts';
 import { createOrganizeRouter } from './modules/organize/organize.routes.ts';
 import { createPhotosRouter } from './modules/photos/photos.routes.ts';
 
@@ -68,6 +69,7 @@ export function createApp(config: AppConfig): express.Express {
   api.use('/books', createBooksRouter(storageConfig));
   api.use(createPhotosRouter(storageConfig));
   api.use(createOrganizeRouter(config));
+  api.use(createJournalRouter(config));
 
   api.use(apiNotFound);
   app.use('/api', api);
