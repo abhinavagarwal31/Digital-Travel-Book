@@ -18,6 +18,21 @@ interface FlipBookProps {
 }
 
 /**
+ * The edges of the pages on one side, as a stack of thin lines peeking out
+ * below and beside the open page: a thicker stack for more pages, the way a
+ * real book shows how far through it you are.
+ */
+export function pageStack(leaves: number, side: 'left' | 'right'): string {
+  const layers = Math.min(9, Math.ceil(leaves * 0.45));
+  const sign = side === 'right' ? 1 : -1;
+  return Array.from({ length: layers }, (_, i) => {
+    const step = i + 1;
+    const colour = step % 2 === 0 ? 'var(--page-edge-dark)' : 'var(--page-edge)';
+    return `${sign * step * 0.9}px ${step * 0.7}px 0 ${colour}`;
+  }).join(', ');
+}
+
+/**
  * The book as a stack of leaves hinged at the spine. Paper leaves turn by
  * curling (CurlLeaf); the covers are boards and swing stiffly on their hinge.
  * Only leaves near the open spread render their content, so long books stay
@@ -81,6 +96,22 @@ export function FlipBook(props: FlipBookProps) {
       onPointerDown={onPointerDown}
       onPointerUp={onPointerUp}
     >
+      {/* The hard case the pages are bound into, and the thickness of the pages on each side. */}
+      <div className="book-case" aria-hidden="true" />
+      {mode === 'double' && turned > 0 && (
+        <div
+          className="page-block left"
+          aria-hidden="true"
+          style={{ boxShadow: pageStack(turned, 'left') }}
+        />
+      )}
+      {turned < total && (
+        <div
+          className="page-block right"
+          aria-hidden="true"
+          style={{ boxShadow: pageStack(total - turned, 'right') }}
+        />
+      )}
       {Array.from({ length: total }, (_, leaf) => {
         const [front, back] = leafPages(leaf, pageCount, mode);
         const flight = flights.get(leaf);

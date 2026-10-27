@@ -1,6 +1,7 @@
 import { composeBook, resolveTheme, type BookPage } from '@tb/shared';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, type CSSProperties } from 'react';
 import { Link, useParams } from 'react-router';
+import { coverColour } from '../components/BookCover.tsx';
 import { ErrorBoundary } from '../components/ErrorBoundary.tsx';
 import { FlipBook } from '../components/reader/FlipBook.tsx';
 import { PageView } from '../components/reader/PageView.tsx';
@@ -122,7 +123,12 @@ export function ReaderPage() {
 
       <main
         className="reader-stage"
-        style={themeStyle(theme.definition)}
+        style={
+          {
+            ...themeStyle(theme.definition),
+            '--cover': theme.definition.colors.cover ?? coverColour(b.id),
+          } as CSSProperties
+        }
         data-frame={theme.definition.photos.frame}
       >
         <FlipBook
