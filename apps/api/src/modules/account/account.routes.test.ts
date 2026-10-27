@@ -178,9 +178,68 @@ describe('DELETE /account', () => {
   });
 });
 
+describe('GET /account/places', () => {
+  it("lists each book's places in time order, leaving out removed and suspicious ones", async () => {
+    const asha = await loggedInAgent(app, 'asha@example.com');
+    const ben = await loggedInAgent(app, 'ben@example.com');
+    const userId = (await asha.get('/api/auth/me')).body.user.id;
+    const benId = (await ben.get('/api/auth/me')).body.user.id;
+    const book = (await asha.post('/api/books').send(JAPAN)).body.book.id;
+    const empty = (await asha.post('/api/books').send({ ...JAPAN, title: 'No GPS' })).body.book.id;
+    const bens = (await ben.post('/api/books').send(JAPAN)).body.book.id;
+    const at = (
+      owner: string,
+      bookId: string,
+      n: number,
+      hour: number,
+      lat: number,
+      lng: number,
+      extra: object = {},
+    ) => ({
+      userId: owner,
+      bookId,
+      originalFilename: `${n}.jpg`,
+      mime: 'image/jpeg',
+      bytes: 1,
+      contentHash: `${bookId}-${n}`,
+      storage: { publicId: `p/${n}`, version: 1 },
+      status: 'ready',
+      capturedAt: new Date(`2026-10-11T${String(hour).padStart(2, '0')}:00:00Z`),
+      gps: { lat, lng },
+      gpsStatus: 'exif',
+      ...extra,
+    });
+    await PhotoModel.insertMany([
+      at(userId, book, 2, 12, 35.01, 135.77), // Kyoto, later
+      at(userId, book, 1, 2, 35.68, 139.76), // Tokyo, first
+      at(userId, book, 3, 3, 35.69, 139.7), // Tokyo again, same place
+      at(userId, book, 4, 5, 51.5, -0.12, { flags: ['gps_outlier'] }),
+      at(userId, book, 5, 6, 10, 10, { gpsStatus: 'removed' }),
+      at(userId, book, 6, 7, 20, 20, { hidden: true }),
+      at(benId, bens, 7, 1, 40.7, -74),
+    ]);
+    const res = await asha.get('/api/account/places');
+    expect(res.status).toBe(200);
+    // A book without located photos has no path at all.
+    expect(res.body.trips.some((t: { bookId: string }) => t.bookId === empty)).toBe(false);
+    expect(res.body.trips).toEqual([
+      {
+        bookId: book,
+        title: JAPAN.title,
+        startDate: JAPAN.startDate,
+        points: [
+          { lat: 35.68, lng: 139.76 },
+          { lat: 35.01, lng: 135.77 },
+        ],
+      },
+    ]);
+  });
+});
+
 it('every account route needs a session', async () => {
   for (const [method, path] of [
     ['get', '/api/account'],
+    ['get', '/api/account/places'],
     ['patch', '/api/account'],
     ['put', '/api/account/password'],
     ['post', '/api/account/sessions/sign-out-others'],

@@ -2,6 +2,7 @@ export * from './book/arrange.ts';
 export * from './book/compose.ts';
 export * from './book/maps.ts';
 export * from './book/paginate.ts';
+export * from './book/world.ts';
 export * from './organize/geo.ts';
 export * from './organize/organize.ts';
 export * from './organize/outliers.ts';

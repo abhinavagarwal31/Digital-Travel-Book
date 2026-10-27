@@ -1,4 +1,4 @@
-import type { Account, ChangePasswordBody, UpdateAccountBody } from '@tb/shared';
+import type { Account, ChangePasswordBody, TripPath, UpdateAccountBody } from '@tb/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from './api.ts';
 import { ME_QUERY_KEY } from './auth.ts';
@@ -10,6 +10,14 @@ export function useAccount({ enabled = true } = {}) {
     enabled,
     queryKey: ACCOUNT_KEY,
     queryFn: async () => (await apiFetch<{ account: Account }>('/account')).account,
+  });
+}
+
+/** Every place the trips have reached, per book, for the world globe. */
+export function usePlaces() {
+  return useQuery({
+    queryKey: ['places'],
+    queryFn: async () => (await apiFetch<{ trips: TripPath[] }>('/account/places')).trips,
   });
 }
 

@@ -2316,3 +2316,58 @@ textarea[aria-invalid='true'] {
   font-size: 6cqw;
   filter: grayscale(0.2);
 }
+
+/* ---------- Your world: the globe on the library page ---------- */
+
+.library-hero {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+@media (max-width: 720px) {
+  .library-hero {
+    grid-template-columns: 1fr;
+  }
+}
+
+.your-world {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0.75rem 1.5rem 0.75rem 0.75rem;
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(60% 80% at 25% 50%, rgb(70 130 200 / 0.18), transparent 70%), var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+}
+
+.your-world-text {
+  max-width: 13rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.your-world-text h2 {
+  font-size: 1.25rem;
+}
+
+.world-globe {
+  display: block;
+  cursor: grab;
+  touch-action: none;
+}
+
+.world-globe:active {
+  cursor: grabbing;
+}
+
+.world-globe.placeholder {
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #2f6ea3, #0c2340 70%);
+  transform: scale(0.76);
+}

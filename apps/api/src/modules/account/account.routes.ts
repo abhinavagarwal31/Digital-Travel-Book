@@ -2,10 +2,12 @@ import {
   changePasswordBodySchema,
   deleteAccountBodySchema,
   photoLimit,
+  travelPath,
   updateAccountBodySchema,
   type Account,
   type ChangePasswordBody,
   type DeleteAccountBody,
+  type TripPath,
   type UpdateAccountBody,
 } from '@tb/shared';
 import express, { type Router } from 'express';
@@ -106,6 +108,41 @@ export function createAccountRouter(config: AccountRouterConfig): Router {
 
   router.get('/', async (req, res) => {
     res.json({ account: await accountOf(await me(authUserId(req))) });
+  });
+
+  /**
+   * Every place the account's trips have reached, for the world map: per
+   * book, its located photos in time order, merged into places. Locations the
+   * owner removed, and suspicious ones not yet confirmed, are left out, as on
+   * the book's own maps.
+   */
+  router.get('/places', async (req, res) => {
+    const userId = authUserId(req);
+    const books = await BookModel.find({ userId, ...ACTIVE })
+      .sort({ startDate: 1 })
+      .select('title startDate');
+    const photos = await PhotoModel.find({
+      userId,
+      bookId: { $in: books.map((b) => b._id) },
+      status: 'ready',
+      hidden: false,
+      gps: { $ne: null },
+      capturedAt: { $ne: null },
+      gpsStatus: { $ne: 'removed' },
+    })
+      .sort({ capturedAt: 1, _id: 1 })
+      .select('bookId gps gpsStatus flags');
+    const trips: TripPath[] = books.flatMap((book) => {
+      const located = photos
+        .filter((p) => p.bookId.equals(book._id))
+        .filter((p) => !p.flags.includes('gps_outlier') || p.gpsStatus === 'confirmed')
+        .map((p) => ({ lat: p.gps?.lat as number, lng: p.gps?.lng as number }));
+      const points = travelPath(located);
+      return points.length > 0
+        ? [{ bookId: book.id, title: book.title, startDate: book.startDate, points }]
+        : [];
+    });
+    res.json({ trips });
   });
 
   router.patch('/', passwordAttempts, validateBody(updateAccountBodySchema), async (req, res) => {
