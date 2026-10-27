@@ -110,6 +110,20 @@ function exifObject(exif: TestExif): Record<string, Record<number, unknown>> {
   return { '0th': zeroth, Exif: exifIfd, GPS: gps };
 }
 
+/** Encodes raw RGBA pixels as a JPEG, optionally carrying the given EXIF. */
+export function jpegFromPixels(
+  data: Buffer,
+  width: number,
+  height: number,
+  exif?: TestExif,
+  quality = 85,
+): Buffer {
+  const image = jpeg.encode({ data, width, height }, quality).data;
+  if (!exif) return image;
+  const withExif = piexif.insert(piexif.dump(exifObject(exif)), image.toString('binary'));
+  return Buffer.from(withExif, 'binary');
+}
+
 /** A real JPEG file, optionally carrying the given EXIF. */
 export function makeJpeg(options: TestJpegOptions = {}): Buffer {
   const width = options.width ?? 64;

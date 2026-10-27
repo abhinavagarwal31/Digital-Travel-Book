@@ -21,6 +21,7 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "fixtures": "node fixtures/generate.ts",
+    "fixtures:test-photos": "node fixtures/make-test-photos.ts",
     "test:e2e": "playwright test",
     "test:integration": "RUN_CLOUDINARY_INTEGRATION=1 node --env-file=.env.production.local node_modules/vitest/vitest.mjs run apps/api/src/lib/cloudinaryStorage.integration.test.ts",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm run test"
