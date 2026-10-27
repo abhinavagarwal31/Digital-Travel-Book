@@ -14,6 +14,7 @@ import { useBook } from '../lib/books.ts';
 import { formatDayHeading } from '../lib/dates.ts';
 import { AFTER_ANY_TIME, photoImageUrl, usePhotos } from '../lib/photos.ts';
 import { useSorting, type Undo } from '../lib/sorting.ts';
+import { dayZone, DropZone, PhotoChip, SortDnd, TRAY_ZONE } from '../components/sort/dnd.tsx';
 import { NotFoundPage } from './NotFoundPage.tsx';
 
 export const REASON_LABELS: Record<SortingReason, string> = {
@@ -32,34 +33,6 @@ const byTime = (a: Photo, b: Photo) =>
 const byFilename = (a: Photo, b: Photo) =>
   a.originalFilename.localeCompare(b.originalFilename, undefined, { numeric: true });
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
-
-/** One photo on the board: a toggle button, so it works by click, tap and keyboard. */
-function PhotoChip({
-  photo,
-  selected,
-  onToggle,
-  note,
-}: {
-  photo: Photo;
-  selected: boolean;
-  onToggle: (event: MouseEvent) => void;
-  note?: string;
-}) {
-  return (
-    <button
-      type="button"
-      className="sort-chip"
-      aria-pressed={selected}
-      aria-label={[photo.originalFilename, time(photo), note].filter(Boolean).join(', ')}
-      onClick={onToggle}
-    >
-      <img src={photoImageUrl(photo.id, 'thumb')} alt="" loading="lazy" />
-      {time(photo) && <span className="sort-chip-time">{time(photo)}</span>}
-      {note && <span className="sort-chip-note">{note}</span>}
-      <span className="sort-chip-check" aria-hidden="true" />
-    </button>
-  );
-}
 
 /** A day's photos grouped into the stops (one place, one visit) they were taken at. */
 function stopGroups(dayPhotos: Photo[]): { key: string; label: string | null; photos: Photo[] }[] {
@@ -248,163 +221,181 @@ export function SortPage() {
       )}
 
       {ready.length > 0 && (
-        <div className="sort-layout">
-          <aside className="stack sort-tray" aria-labelledby="tray-heading">
-            <section className="card stack">
-              <header className="sort-section-head">
-                <h2 id="tray-heading">To sort</h2>
-                {tray.length > 1 && (
-                  <button
-                    type="button"
-                    className="link-button"
-                    onClick={() => setSelected(new Set([...selected, ...tray.map((p) => p.id)]))}
-                  >
-                    Select all
-                  </button>
+        <SortDnd
+          photoById={new Map(visible.map((p) => [p.id, p]))}
+          selection={chosen}
+          onDrop={(photos, dayDate) => {
+            if (!busy) void moveTo(photos, dayDate);
+          }}
+        >
+          <div className="sort-layout">
+            <aside className="stack sort-tray" aria-labelledby="tray-heading">
+              <DropZone
+                id={TRAY_ZONE}
+                data={{ dayDate: null, order: 0, label: 'To sort (no day)' }}
+                className="card stack"
+              >
+                <header className="sort-section-head">
+                  <h2 id="tray-heading">To sort</h2>
+                  {tray.length > 1 && (
+                    <button
+                      type="button"
+                      className="link-button"
+                      onClick={() => setSelected(new Set([...selected, ...tray.map((p) => p.id)]))}
+                    >
+                      Select all
+                    </button>
+                  )}
+                </header>
+                {tray.length === 0 ? (
+                  <p className="muted">Nothing left to sort.</p>
+                ) : (
+                  <>
+                    <p className="hint">
+                      These have no day yet. Drag them onto a day, or select them and choose one.
+                    </p>
+                    <div className="sort-chips">
+                      {tray.map((p) =>
+                        chip(p, tray, REASON_LABELS[statusOf.get(p.id)?.reasons[0] ?? 'no_date']),
+                      )}
+                    </div>
+                  </>
                 )}
-              </header>
-              {tray.length === 0 ? (
-                <p className="muted">Nothing left to sort.</p>
-              ) : (
-                <>
-                  <p className="hint">
-                    These have no day yet. Select them and choose a day, or leave them out.
-                  </p>
-                  <div className="sort-chips">
-                    {tray.map((p) =>
-                      chip(p, tray, REASON_LABELS[statusOf.get(p.id)?.reasons[0] ?? 'no_date']),
-                    )}
-                  </div>
-                </>
-              )}
-            </section>
+              </DropZone>
 
-            {toCheck.length > 0 && (
-              <section className="card stack" aria-labelledby="check-heading">
-                <h2 id="check-heading">Check these</h2>
-                <p className="hint">
-                  These locations are far from the photos taken just before and after. Is the place
-                  right?
-                </p>
-                <ul className="sort-checks">
-                  {toCheck.map((p) => (
-                    <li key={p.id}>
-                      <img src={photoImageUrl(p.id, 'thumb')} alt="" loading="lazy" />
-                      <div className="stack" style={{ gap: '0.35rem' }}>
-                        <span className="sort-check-name">{p.originalFilename}</span>
-                        <div className="actions">
-                          <button
-                            type="button"
-                            className="button small"
-                            disabled={busy}
-                            onClick={() =>
-                              run(`Kept the location of ${p.originalFilename}`, () =>
-                                sorting.location.mutateAsync({ photo: p, action: 'confirm' }),
-                              )
-                            }
-                          >
-                            Location is right
-                          </button>
+              {toCheck.length > 0 && (
+                <section className="card stack" aria-labelledby="check-heading">
+                  <h2 id="check-heading">Check these</h2>
+                  <p className="hint">
+                    These locations are far from the photos taken just before and after. Is the
+                    place right?
+                  </p>
+                  <ul className="sort-checks">
+                    {toCheck.map((p) => (
+                      <li key={p.id}>
+                        <img src={photoImageUrl(p.id, 'thumb')} alt="" loading="lazy" />
+                        <div className="stack" style={{ gap: '0.35rem' }}>
+                          <span className="sort-check-name">{p.originalFilename}</span>
+                          <div className="actions">
+                            <button
+                              type="button"
+                              className="button small"
+                              disabled={busy}
+                              onClick={() =>
+                                run(`Kept the location of ${p.originalFilename}`, () =>
+                                  sorting.location.mutateAsync({ photo: p, action: 'confirm' }),
+                                )
+                              }
+                            >
+                              Location is right
+                            </button>
+                            <button
+                              type="button"
+                              className="button small ghost"
+                              disabled={busy}
+                              onClick={() =>
+                                run(`Removed the location of ${p.originalFilename}`, () =>
+                                  sorting.location.mutateAsync({ photo: p, action: 'remove' }),
+                                )
+                              }
+                            >
+                              Remove location
+                            </button>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {excluded.length > 0 && (
+                <details className="card sort-excluded">
+                  <summary>Left out of the book ({excluded.length})</summary>
+                  <ul className="sort-checks">
+                    {excluded.map((p) => (
+                      <li key={p.id}>
+                        <img src={photoImageUrl(p.id, 'thumb')} alt="" loading="lazy" />
+                        <div className="stack" style={{ gap: '0.35rem' }}>
+                          <span className="sort-check-name">{p.originalFilename}</span>
                           <button
                             type="button"
                             className="button small ghost"
                             disabled={busy}
                             onClick={() =>
-                              run(`Removed the location of ${p.originalFilename}`, () =>
-                                sorting.location.mutateAsync({ photo: p, action: 'remove' }),
+                              run(`Put ${p.originalFilename} back in the book`, () =>
+                                sorting.setHidden.mutateAsync({ photos: [p], hidden: false }),
                               )
                             }
                           >
-                            Remove location
+                            Include again
                           </button>
                         </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+            </aside>
 
-            {excluded.length > 0 && (
-              <details className="card sort-excluded">
-                <summary>Left out of the book ({excluded.length})</summary>
-                <ul className="sort-checks">
-                  {excluded.map((p) => (
-                    <li key={p.id}>
-                      <img src={photoImageUrl(p.id, 'thumb')} alt="" loading="lazy" />
-                      <div className="stack" style={{ gap: '0.35rem' }}>
-                        <span className="sort-check-name">{p.originalFilename}</span>
+            <div className="stack sort-days" aria-label="Days">
+              {days.map((day, i) => {
+                const dayPhotos = visible.filter((p) => p.dayDate === day);
+                const ordered = [...dayPhotos].sort(byTime);
+                return (
+                  <DropZone
+                    key={day}
+                    id={dayZone(day)}
+                    data={{ dayDate: day, order: i + 1, label: heading(day) }}
+                    className="card sort-day"
+                    aria-labelledby={`day-${day}`}
+                  >
+                    <header className="sort-section-head">
+                      <h3 id={`day-${day}`}>{heading(day)}</h3>
+                      <span className="muted">{plural(dayPhotos.length, 'photo')}</span>
+                      {chosen.length > 0 && (
                         <button
                           type="button"
-                          className="button small ghost"
+                          className="button small"
                           disabled={busy}
-                          onClick={() =>
-                            run(`Put ${p.originalFilename} back in the book`, () =>
-                              sorting.setHidden.mutateAsync({ photos: [p], hidden: false }),
-                            )
-                          }
+                          aria-label={`Move selected photos to ${heading(day)}`}
+                          onClick={() => moveTo(chosen, day)}
                         >
-                          Include again
+                          Move here
                         </button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            )}
-          </aside>
-
-          <div className="stack sort-days" aria-label="Days">
-            {days.map((day) => {
-              const dayPhotos = visible.filter((p) => p.dayDate === day);
-              const ordered = [...dayPhotos].sort(byTime);
-              return (
-                <section key={day} className="card sort-day" aria-labelledby={`day-${day}`}>
-                  <header className="sort-section-head">
-                    <h3 id={`day-${day}`}>{heading(day)}</h3>
-                    <span className="muted">{plural(dayPhotos.length, 'photo')}</span>
-                    {chosen.length > 0 && (
-                      <button
-                        type="button"
-                        className="button small"
-                        disabled={busy}
-                        aria-label={`Move selected photos to ${heading(day)}`}
-                        onClick={() => moveTo(chosen, day)}
-                      >
-                        Move here
-                      </button>
-                    )}
-                  </header>
-                  {dayPhotos.length === 0 ? (
-                    <p className="muted sort-day-empty">No photos on this day.</p>
-                  ) : (
-                    <div className="sort-stops">
-                      {stopGroups(dayPhotos).map((group) => (
-                        <div key={group.key} className="sort-stop">
-                          {/* A lone photo already shows its time; the label would repeat it. */}
-                          <span className="sort-stop-label">
-                            {group.photos.length > 1 || group.key === 'rest' ? group.label : null}
-                          </span>
-                          <div className="sort-chips">
-                            {group.photos.map((p) =>
-                              chip(
-                                p,
-                                ordered,
-                                statusOf.get(p.id)?.toCheck
-                                  ? REASON_LABELS.location_check
-                                  : undefined,
-                              ),
-                            )}
+                      )}
+                    </header>
+                    {dayPhotos.length === 0 ? (
+                      <p className="muted sort-day-empty">No photos on this day.</p>
+                    ) : (
+                      <div className="sort-stops">
+                        {stopGroups(dayPhotos).map((group) => (
+                          <div key={group.key} className="sort-stop">
+                            {/* A lone photo already shows its time; the label would repeat it. */}
+                            <span className="sort-stop-label">
+                              {group.photos.length > 1 || group.key === 'rest' ? group.label : null}
+                            </span>
+                            <div className="sort-chips">
+                              {group.photos.map((p) =>
+                                chip(
+                                  p,
+                                  ordered,
+                                  statusOf.get(p.id)?.toCheck
+                                    ? REASON_LABELS.location_check
+                                    : undefined,
+                                ),
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </section>
-              );
-            })}
+                        ))}
+                      </div>
+                    )}
+                  </DropZone>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        </SortDnd>
       )}
 
       {(chosen.length > 0 || notice) && (

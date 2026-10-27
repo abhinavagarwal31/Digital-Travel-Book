@@ -1137,3 +1137,71 @@ textarea[aria-invalid='true'] {
   line-height: 1.4rem;
   text-align: center;
 }
+
+/* Drag and drop on the sorting board */
+
+.sort-chip {
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+.sort-chip.travelling {
+  opacity: 0.35;
+}
+
+.sort-tray .drop-ready,
+.sort-day.drop-ready {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--line));
+}
+
+.sort-tray .drop-over,
+.sort-day.drop-over {
+  border-style: solid;
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.sort-day,
+.sort-tray .card {
+  transition:
+    border-color 120ms,
+    background 120ms,
+    box-shadow 120ms;
+}
+
+.sort-drag-preview {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  transform: rotate(-3deg);
+  cursor: grabbing;
+}
+
+.sort-drag-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  outline: 3px solid var(--accent);
+}
+
+.sort-drag-count {
+  position: absolute;
+  top: -0.6rem;
+  right: -0.6rem;
+  min-width: 1.6rem;
+  height: 1.6rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.6rem;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
