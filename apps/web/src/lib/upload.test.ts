@@ -8,7 +8,20 @@ afterEach(() => vi.unstubAllGlobals());
 const jpeg = (name: string, body = name) => new File([body], name, { type: 'image/jpeg' });
 
 /** A fake API + storage, answering by URL, recording calls. */
-function fakeServer(options: { duplicateHashes?: string[]; failStorageFor?: string } = {}) {
+function fakeServer(
+  options: {
+    duplicateHashes?: string[];
+    failStorageFor?: string;
+    /** Storage answers with this status… */
+    storageStatus?: number;
+    /** …this many times for each file, then accepts it. */
+    storageFailures?: number;
+    /** The first confirm of each photo is lost on the network. */
+    dropFirstConfirm?: boolean;
+  } = {},
+) {
+  const storageTries = new Map<string, number>();
+  const confirmed = new Set<string>();
   const calls: { url: string; body?: unknown }[] = [];
   vi.stubGlobal(
     'fetch',
@@ -35,11 +48,19 @@ function fakeServer(options: { duplicateHashes?: string[]; failStorageFor?: stri
         const form = init?.body as FormData;
         const id = String(form.get('public_id'));
         calls.push({ url, body: id });
-        if (id === options.failStorageFor) return new Response('nope', { status: 500 });
+        const tries = (storageTries.get(id) ?? 0) + 1;
+        storageTries.set(id, tries);
+        const status = options.storageStatus ?? 500;
+        if (id === options.failStorageFor) return new Response('nope', { status });
+        if (tries <= (options.storageFailures ?? 0)) return new Response('busy', { status });
         return Response.json({ version: 1, signature: 'a'.repeat(40) });
       }
       if (url.endsWith('/confirm')) {
         calls.push({ url, body: JSON.parse(String(init?.body)) });
+        if (options.dropFirstConfirm && !confirmed.has(url)) {
+          confirmed.add(url);
+          throw new TypeError('Failed to fetch');
+        }
         return Response.json({ photo: {} });
       }
       return new Response(null, { status: 404 });
@@ -54,6 +75,7 @@ async function run(files: File[]) {
     'b1',
     files.map((file, i) => ({ key: String(i), file })),
     (key, patch) => states.set(key, { ...states.get(key), ...patch }),
+    [0, 0],
   );
   return files.map((_, i) => states.get(String(i)));
 }
@@ -113,6 +135,48 @@ describe('uploadPhotos', () => {
     fakeServer({ failStorageFor: 'b.jpg' });
     const states = await run([jpeg('a.jpg'), jpeg('b.jpg'), jpeg('c.jpg')]);
     expect(states.map((s) => s?.status)).toEqual(['done', 'failed', 'done']);
+  });
+
+  it('tries a busy storage again, up to three times in all', async () => {
+    const calls = fakeServer({ storageFailures: 2 });
+    expect((await run([jpeg('a.jpg')]))[0]?.status).toBe('done');
+    expect(calls.filter((c) => c.url.includes('storage')).length).toBe(3);
+
+    const gaveUp = fakeServer({ storageFailures: 3 });
+    const [state] = await run([jpeg('b.jpg')]);
+    expect(state).toMatchObject({ status: 'failed', retryable: true });
+    expect(gaveUp.filter((c) => c.url.includes('storage')).length).toBe(3);
+  });
+
+  it('does not repeat an upload storage refused', async () => {
+    const calls = fakeServer({ failStorageFor: 'a.jpg', storageStatus: 400 });
+    const [state] = await run([jpeg('a.jpg')]);
+    expect(state).toMatchObject({ status: 'failed', retryable: false });
+    expect(calls.filter((c) => c.url.includes('storage')).length).toBe(1);
+  });
+
+  it('confirms again when the answer was lost, and says so plainly when offline', async () => {
+    const calls = fakeServer({ dropFirstConfirm: true });
+    expect((await run([jpeg('a.jpg')]))[0]?.status).toBe('done');
+    expect(calls.filter((c) => c.url.endsWith('/confirm')).length).toBe(2);
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new TypeError('Failed to fetch');
+      }),
+    );
+    expect((await run([jpeg('b.jpg')]))[0]).toMatchObject({
+      status: 'failed',
+      error: 'Could not reach the server. Check your connection.',
+      retryable: true,
+    });
+  });
+
+  it('marks wrong files as not worth retrying', async () => {
+    fakeServer();
+    const [state] = await run([new File(['x'], 'notes.txt', { type: 'text/plain' })]);
+    expect(state).toMatchObject({ status: 'failed', retryable: false });
   });
 
   it('announces in batches of at most 50', async () => {

@@ -5,7 +5,7 @@ import {
   type Photo,
   type UploadIntentResult,
 } from '@tb/shared';
-import { apiFetch } from './api.ts';
+import { apiFetch, ApiRequestError } from './api.ts';
 
 export type UploadStatus =
   'queued' | 'checking' | 'uploading' | 'processing' | 'done' | 'duplicate' | 'failed';
@@ -15,6 +15,8 @@ export interface UploadItem {
   name: string;
   status: UploadStatus;
   error?: string;
+  /** A failure that may pass on another try (not a wrong type or size). */
+  retryable?: boolean;
 }
 
 type Mime = (typeof UPLOAD_MIME_TYPES)[number];
@@ -38,6 +40,55 @@ export function photoMime(file: File): Mime | null {
 async function sha256Hex(file: File): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** Storage refused or failed an upload, with its HTTP status. */
+class StorageError extends Error {
+  readonly status: number;
+  constructor(status: number) {
+    super(status >= 500 ? 'Photo storage is not answering' : 'Upload to storage failed');
+    this.name = 'StorageError';
+    this.status = status;
+  }
+}
+
+/**
+ * A failure worth trying again: no connection, or the server or storage
+ * briefly unavailable or busy. A refusal (bad file, limit reached) is not.
+ */
+export function isTransient(err: unknown): boolean {
+  if (err instanceof TypeError) return true; // fetch's network failure
+  if (err instanceof ApiRequestError || err instanceof StorageError) {
+    return err.status >= 500 || err.status === 429;
+  }
+  return false;
+}
+
+/** Waits before the 2nd and 3rd tries; every step of an upload is safe to repeat. */
+export const RETRY_DELAYS_MS = [800, 2500];
+
+export async function withRetries<T>(
+  task: () => Promise<T>,
+  delays: readonly number[] = RETRY_DELAYS_MS,
+): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await task();
+    } catch (err) {
+      const delay = delays[attempt];
+      if (delay === undefined || !isTransient(err)) throw err;
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+}
+
+function failure(err: unknown): Partial<UploadItem> {
+  const offline = err instanceof TypeError;
+  return {
+    status: 'failed',
+    error: offline ? 'Could not reach the server. Check your connection.' : (err as Error).message,
+    retryable: isTransient(err),
+  };
 }
 
 /** Runs tasks with at most `limit` in flight. */
@@ -66,18 +117,24 @@ export async function uploadPhotos(
   bookId: string,
   items: { key: string; file: File }[],
   report: (key: string, patch: Partial<UploadItem>) => void,
+  retryDelays: readonly number[] = RETRY_DELAYS_MS,
 ): Promise<void> {
+  const retrying = <T>(task: () => Promise<T>) => withRetries(task, retryDelays);
   const prepared: Prepared[] = [];
   for (const { key, file } of items) {
     const mime = photoMime(file);
     if (!mime) {
-      report(key, { status: 'failed', error: 'Not a supported photo (JPEG, PNG, WebP or HEIC)' });
+      report(key, {
+        status: 'failed',
+        error: 'Not a supported photo (JPEG, PNG, WebP or HEIC)',
+        retryable: false,
+      });
     } else if (file.size > MAX_UPLOAD_BYTES) {
-      report(key, { status: 'failed', error: 'Larger than 10 MB' });
+      report(key, { status: 'failed', error: 'Larger than 10 MB', retryable: false });
     } else if (file.size === 0) {
-      report(key, { status: 'failed', error: 'The file is empty' });
+      report(key, { status: 'failed', error: 'The file is empty', retryable: false });
     } else {
-      report(key, { status: 'checking' });
+      report(key, { status: 'checking', error: undefined, retryable: undefined });
       prepared.push({ key, file, mime, hash: await sha256Hex(file) });
     }
   }
@@ -87,9 +144,8 @@ export async function uploadPhotos(
   for (let i = 0; i < prepared.length; i += MAX_FILES_PER_UPLOAD_REQUEST) {
     const batch = prepared.slice(i, i + MAX_FILES_PER_UPLOAD_REQUEST);
     try {
-      const { results } = await apiFetch<{ results: UploadIntentResult[] }>(
-        `/books/${bookId}/uploads`,
-        {
+      const { results } = await retrying(() =>
+        apiFetch<{ results: UploadIntentResult[] }>(`/books/${bookId}/uploads`, {
           method: 'POST',
           json: {
             files: batch.map((p) => ({
@@ -99,7 +155,7 @@ export async function uploadPhotos(
               clientHash: p.hash,
             })),
           },
-        },
+        }),
       );
       batch.forEach((item, index) => {
         const intent = results[index];
@@ -107,36 +163,37 @@ export async function uploadPhotos(
         else report(item.key, { status: 'duplicate' });
       });
     } catch (err) {
-      for (const item of batch)
-        report(item.key, { status: 'failed', error: (err as Error).message });
+      for (const item of batch) report(item.key, failure(err));
     }
   }
 
   await inPool(toUpload, 3, async ({ item, intent }) => {
     try {
       report(item.key, { status: 'uploading' });
-      const form = new FormData();
-      for (const [name, value] of Object.entries(intent.upload.fields)) form.append(name, value);
-      form.append('file', item.file);
-      const stored = await fetch(intent.upload.url, {
-        method: 'POST',
-        body: form,
-        credentials: 'omit',
+      const { version, signature } = await retrying(async () => {
+        const form = new FormData();
+        for (const [name, value] of Object.entries(intent.upload.fields)) form.append(name, value);
+        form.append('file', item.file);
+        const stored = await fetch(intent.upload.url, {
+          method: 'POST',
+          body: form,
+          credentials: 'omit',
+        });
+        if (!stored.ok) throw new StorageError(stored.status);
+        return (await stored.json()) as { version: number; signature: string };
       });
-      if (!stored.ok) throw new Error('Upload to storage failed');
-      const { version, signature } = (await stored.json()) as {
-        version: number;
-        signature: string;
-      };
 
       report(item.key, { status: 'processing' });
-      await apiFetch<{ photo: Photo }>(`/photos/${intent.photoId}/confirm`, {
-        method: 'POST',
-        json: { version, signature },
-      });
+      // Confirming twice is harmless: the second answer is the photo already confirmed.
+      await retrying(() =>
+        apiFetch<{ photo: Photo }>(`/photos/${intent.photoId}/confirm`, {
+          method: 'POST',
+          json: { version, signature },
+        }),
+      );
       report(item.key, { status: 'done' });
     } catch (err) {
-      report(item.key, { status: 'failed', error: (err as Error).message });
+      report(item.key, failure(err));
     }
   });
 }
