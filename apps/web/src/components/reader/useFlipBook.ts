@@ -1,6 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { leafCount, turnedForPage, visiblePages, type FlipMode } from '../../lib/flip.ts';
 
+/**
+ * The page a turn uncovers, lying under the sheet as it lifts: the next
+ * right-hand page going forward, the left-hand one going back. The page on the
+ * turning sheet's other side is not it: that one is seen printed on the flap.
+ */
+export function uncoveredPage(
+  turnedAfter: number,
+  direction: 1 | -1,
+  pageCount: number,
+  mode: FlipMode,
+): number | null {
+  if (mode === 'single') return direction === 1 && turnedAfter < pageCount ? turnedAfter : null;
+  const page = direction === 1 ? turnedAfter * 2 : turnedAfter * 2 - 1;
+  return page >= 0 && page < pageCount ? page : null;
+}
+
 /** Must match the leaf transition in reader.css. */
 export const FLIP_MS = 900;
 /** Delay between leaves when riffling to a distant page. */
@@ -34,6 +50,8 @@ export function useFlipBook(pageCount: number) {
   const riffle = useRef<number | undefined>(undefined);
   const [riffleOrigin, setRiffleOrigin] = useState<number | null>(null);
   const inFlight = useRef(0);
+  // The page whose contents appear as a turn uncovers it; the count restarts its animation.
+  const [reveal, setReveal] = useState<{ page: number; count: number } | null>(null);
 
   // Switching between spreads and single pages keeps the same page in view.
   const modeRef = useRef(mode);
@@ -55,6 +73,8 @@ export function useFlipBook(pageCount: number) {
       turnedRef.current = next;
       setTurned(next);
       if (!reducedMotion) {
+        const page = uncoveredPage(next, direction, pageCount, mode);
+        setReveal((r) => (page === null ? null : { page, count: (r?.count ?? 0) + 1 }));
         const leaf = direction === 1 ? current : next;
         inFlight.current += 1;
         setFlights((f) => new Map(f).set(leaf, direction));
@@ -70,7 +90,7 @@ export function useFlipBook(pageCount: number) {
       }
       return true;
     },
-    [total, reducedMotion],
+    [total, reducedMotion, pageCount, mode],
   );
 
   const stopRiffle = () => window.clearTimeout(riffle.current);
@@ -128,6 +148,7 @@ export function useFlipBook(pageCount: number) {
     flights,
     riffleOrigin,
     reducedMotion,
+    reveal,
     next,
     prev,
     settle,

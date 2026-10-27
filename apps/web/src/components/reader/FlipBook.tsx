@@ -19,6 +19,8 @@ interface FlipBookProps {
   onSettle: (direction: 1 | -1) => void;
   /** No dragging or curling when the reader prefers less motion. */
   reducedMotion: boolean;
+  /** The page a turn is uncovering: its contents appear as it comes into view. */
+  reveal: { page: number; count: number } | null;
   label: string;
 }
 
@@ -56,8 +58,18 @@ export function FlipBook(props: FlipBookProps) {
     onPrev,
     onSettle,
     reducedMotion,
+    reveal,
     label,
   } = props;
+  // A page being uncovered is drawn afresh (new key), so its entrance plays once.
+  const face = (side: 'front' | 'back', page: number | null, content: ReactNode) => {
+    const revealing = page !== null && reveal?.page === page;
+    return (
+      <div className={`face ${side}${revealing ? ' revealing' : ''}`}>
+        <Fragment key={revealing ? `reveal-${reveal.count}` : 'still'}>{content}</Fragment>
+      </div>
+    );
+  };
   const pointer = useRef<{ x: number; y: number } | null>(null);
   // The covers (and the endpapers glued to them) are stiff boards.
   const isHard = (leaf: number) => {
@@ -167,8 +179,8 @@ export function FlipBook(props: FlipBookProps) {
               }}
               aria-hidden={!shown}
             >
-              <div className="face front">{near && !curling && renderPage(front)}</div>
-              <div className="face back">{near && !curling && backFace}</div>
+              {face('front', front, near && !curling && renderPage(front))}
+              {face('back', back, near && !curling && backFace)}
             </div>
             {curling && (
               <CurlLeaf

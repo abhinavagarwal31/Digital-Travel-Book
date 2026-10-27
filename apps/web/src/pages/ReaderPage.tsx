@@ -6,6 +6,7 @@ import { ErrorBoundary } from '../components/ErrorBoundary.tsx';
 import { FlipBook } from '../components/reader/FlipBook.tsx';
 import { PageView } from '../components/reader/PageView.tsx';
 import { useFlipBook } from '../components/reader/useFlipBook.ts';
+import { useFullscreen, useReaderChrome } from '../components/reader/useReaderChrome.ts';
 import { useCurrentUser } from '../lib/auth.ts';
 import { useBook } from '../lib/books.ts';
 import { formatDayHeading } from '../lib/dates.ts';
@@ -47,6 +48,9 @@ export function ReaderPage() {
   );
   const flip = useFlipBook(pages.length);
   const { next, prev } = flip;
+  const chrome = useReaderChrome();
+  const fullscreen = useFullscreen();
+  const { toggle: toggleFullscreen } = fullscreen;
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -55,10 +59,11 @@ export function ReaderPage() {
       }
       if (event.key === 'ArrowRight' || event.key === 'PageDown') next();
       if (event.key === 'ArrowLeft' || event.key === 'PageUp') prev();
+      if (event.key === 'f' && !event.metaKey && !event.ctrlKey) toggleFullscreen();
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [next, prev]);
+  }, [next, prev, toggleFullscreen]);
 
   if (book.isError || photos.isError) {
     return (
@@ -93,24 +98,38 @@ export function ReaderPage() {
       : `${numbered.length === 2 ? `Pages ${numbered[0]}–${numbered[1]}` : `Page ${numbered[0]}`} of ${lastPage}`;
 
   return (
-    <div className="reader">
-      <header className="reader-bar">
+    <div className="reader" data-chrome={chrome.visible ? 'shown' : 'hidden'}>
+      <header className="reader-bar" {...chrome.holdProps}>
         <Link to={`/books/${b.id}`} className="reader-back">
           ← {b.title}
         </Link>
-        <label className="reader-toc">
-          <span className="visually-hidden">Go to</span>
-          <select
-            value={current?.index ?? 0}
-            onChange={(event) => flip.goToPage(Number(event.target.value))}
-          >
-            {toc.map((entry) => (
-              <option key={entry.index} value={entry.index}>
-                {entry.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="reader-tools">
+          <label className="reader-toc">
+            <span className="visually-hidden">Go to</span>
+            <select
+              value={current?.index ?? 0}
+              onChange={(event) => flip.goToPage(Number(event.target.value))}
+            >
+              {toc.map((entry) => (
+                <option key={entry.index} value={entry.index}>
+                  {entry.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {fullscreen.supported && (
+            <button
+              type="button"
+              className="reader-fullscreen"
+              onClick={fullscreen.toggle}
+              aria-pressed={fullscreen.active}
+              title="Full screen (F)"
+            >
+              <span aria-hidden="true">{fullscreen.active ? '⤡' : '⤢'}</span>
+              <span className="visually-hidden">Full screen</span>
+            </button>
+          )}
+        </div>
       </header>
 
       {/* The theme styles the book only; the controls around it stay the app's. */}
@@ -143,6 +162,7 @@ export function ReaderPage() {
           onPrev={flip.prev}
           onSettle={flip.settle}
           reducedMotion={flip.reducedMotion}
+          reveal={flip.reveal}
           label={b.title}
           renderPage={(index) => {
             const page = pages[index];
@@ -168,7 +188,7 @@ export function ReaderPage() {
         />
       </main>
 
-      <footer className="reader-controls">
+      <footer className="reader-controls" {...chrome.holdProps}>
         <button
           type="button"
           className="turn-button"
