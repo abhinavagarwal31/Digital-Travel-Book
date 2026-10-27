@@ -1,5 +1,5 @@
 import type { Book, Chapter, PhotoLayout, ThemeId } from '@tb/shared';
-import { PHOTO_LAYOUTS, THEME_IDS } from '@tb/shared';
+import { DEFAULT_THEME_ID, latestThemeVersion, PHOTO_LAYOUTS, THEME_IDS } from '@tb/shared';
 import mongoose, { type HydratedDocument, type Types } from 'mongoose';
 
 export interface BookFields {
@@ -44,8 +44,8 @@ const bookSchema = new mongoose.Schema<BookFields>(
     theme: {
       _id: false,
       kind: { type: String, enum: ['preset'], default: 'preset' },
-      id: { type: String, enum: THEME_IDS, default: 'comic' },
-      version: { type: Number, default: 1 },
+      id: { type: String, enum: THEME_IDS, default: DEFAULT_THEME_ID },
+      version: { type: Number, default: latestThemeVersion(DEFAULT_THEME_ID) },
     },
     days: {
       type: [new mongoose.Schema({ date: String, diary: String }, { _id: false })],

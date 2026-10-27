@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { THEME_IDS } from '../schemas/book.ts';
-import { themeDefinitionSchema } from './definition.ts';
+import { coverDesignOf, themeDefinitionSchema } from './definition.ts';
 import { editorialV1 } from './editorial.v1.ts';
 import { DEFAULT_THEME_ID, PRESET_THEMES, latestThemeVersion, resolveTheme } from './registry.ts';
 
@@ -22,6 +22,35 @@ describe('theme definitions', () => {
   });
 });
 
+describe('covers', () => {
+  it('gives only the comic theme a comic cover, and every other one a traveller’s cover', () => {
+    const designs = Object.fromEntries(
+      PRESET_THEMES.map((t) => [t.id, coverDesignOf(t.definition)]),
+    );
+    expect(designs).toEqual({
+      traveller: 'journal',
+      atlas: 'atlas',
+      editorial: 'cloth',
+      scrapbook: 'luggage',
+      comic: 'comic',
+      postcard: 'airmail',
+      midnight: 'passport',
+      pastel: 'cloth',
+      latte: 'cloth',
+      espresso: 'journal',
+    });
+  });
+
+  it('keeps versions released before cover designs on the cover that suits their look', () => {
+    expect(coverDesignOf(resolveTheme({ id: 'comic', version: 1 }).definition)).toBe('comic');
+    expect(coverDesignOf(resolveTheme({ id: 'postcard', version: 1 }).definition)).toBe('cloth');
+  });
+
+  it('starts new books in a quiet, non-comic theme', () => {
+    expect(DEFAULT_THEME_ID).toBe('traveller');
+  });
+});
+
 describe('resolveTheme', () => {
   it('renders exactly the pinned version', () => {
     const t = resolveTheme({ id: 'scrapbook', version: 1 });
@@ -40,6 +69,6 @@ describe('resolveTheme', () => {
   it('falls back to the default theme for an unknown one, and says so', () => {
     const t = resolveTheme({ id: 'vaporwave', version: 1 });
     expect(t.id).toBe(DEFAULT_THEME_ID);
-    expect(t.notice).toMatch(/no longer available, so Minimal Editorial is shown/);
+    expect(t.notice).toMatch(/no longer available, so Traveller’s Journal is shown/);
   });
 });

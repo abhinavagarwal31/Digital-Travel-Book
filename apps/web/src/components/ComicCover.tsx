@@ -10,8 +10,8 @@ interface ComicCoverProps {
   photoUrl?: string | null;
   /** Moving by default; a shelf of covers only moves the one being pointed at. */
   animate?: 'always' | 'hover';
-  /** The cover's own heading level: h1 on the book itself, h2 on a shelf. */
-  headingLevel?: 1 | 2;
+  /** The cover's own heading level: h1 on the book itself, h2 on a shelf, none in a preview. */
+  headingLevel?: 1 | 2 | null;
 }
 
 /** Long titles get smaller lettering so they still fit the panel. */
@@ -52,7 +52,7 @@ export function ComicCover({
   animate = 'always',
   headingLevel = 1,
 }: ComicCoverProps) {
-  const Heading = headingLevel === 1 ? 'h1' : 'h2';
+  const Heading = headingLevel === 1 ? 'h1' : headingLevel === 2 ? 'h2' : 'p';
   return (
     <div
       className={`comic-cover${photoUrl ? ' with-photo' : ''}`}

@@ -28,6 +28,7 @@ it('offers every style with the current one chosen, and saves a new choice', asy
   const group = await screen.findByRole('group', { name: 'Book style' });
   const radios = within(group).getAllByRole('radio');
   expect(radios.map((r) => (r as HTMLInputElement).value)).toEqual([
+    'traveller',
     'atlas',
     'editorial',
     'scrapbook',
@@ -35,6 +36,8 @@ it('offers every style with the current one chosen, and saves a new choice', asy
     'postcard',
     'midnight',
     'pastel',
+    'latte',
+    'espresso',
   ]);
   expect(within(group).getByRole('radio', { name: /Minimal Editorial/ })).toHaveProperty(
     'checked',

@@ -123,6 +123,27 @@ it('prints the chosen photo on the cover of the book', async () => {
   const book = { ...JAPAN_BOOK, overrides: { coverPhotoId: 'b', dayLayouts: [], photoOrder: [] } };
   open(`/books/${BOOK}/read`, book, [photo('a'), photo('b')]);
   await screen.findByRole('heading', { name: JAPAN_BOOK.title, level: 1 });
-  const cover = document.querySelector('.comic-cover.with-photo .comic-photo');
+  const cover = document.querySelector('.travel-cover.with-photo .tc-photo');
   expect(cover?.getAttribute('src')).toContain('/photos/b/image/page');
 });
+
+it.each([
+  ['midnight', 2, '.travel-cover[data-design="passport"]', '.comic-cover'],
+  ['comic', 1, '.comic-cover', '.travel-cover'],
+])(
+  'makes the cover the way the %s theme says: a comic only for the comic theme',
+  async (id, version, shown, absent) => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query.includes('min-width'),
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }));
+    open(`/books/${BOOK}/read`, { ...JAPAN_BOOK, theme: { kind: 'preset', id, version } }, [
+      photo('a'),
+    ]);
+    await screen.findByRole('heading', { name: JAPAN_BOOK.title, level: 1 });
+    expect(document.querySelector(shown)).not.toBeNull();
+    expect(document.querySelector(absent)).toBeNull();
+  },
+);

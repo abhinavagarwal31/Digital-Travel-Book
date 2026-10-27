@@ -2451,3 +2451,701 @@ textarea[aria-invalid='true'] {
     stroke-dashoffset: 0;
   }
 }
+
+/* ---------- Traveller's covers: cloth, journal, atlas, passport, airmail, luggage ---------- */
+
+.cover.designed {
+  padding: 0;
+  /* The cover's own spacing is in cqw, measured against this box. */
+  container-type: inline-size;
+}
+
+.travel-cover {
+  --ink: var(--cover-ink, #f6ead6);
+  --foil: #e3c27a;
+  --kraft: #ecdcbc;
+  --fibres: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.015 0.25' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.34 0 0 0 0 0.2 0 0 0 0.45 -0.2'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23f)'/%3E%3C/svg%3E");
+  --leather: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='l'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.08 0 0 0 0 0.05 0 0 0 0 0.03 0 0 0 0.85 -0.38'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23l)'/%3E%3C/svg%3E");
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  container-type: inline-size;
+  border-radius: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3.2cqw;
+  padding: 12cqw 11cqw 11cqw 15cqw;
+  text-align: center;
+  color: var(--ink);
+  font-family: 'Fraunces Variable', Georgia, serif;
+}
+
+/* The hinge near the spine, over every design (on the back it is on the right). */
+.travel-cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgb(0 0 0 / 0.3) 0,
+    rgb(0 0 0 / 0.08) 2%,
+    rgb(255 255 255 / 0.1) 3%,
+    transparent 7%
+  );
+}
+
+.travel-cover.back::before {
+  transform: scaleX(-1);
+}
+
+.travel-cover .tc-title,
+.travel-cover p,
+.travel-cover ul {
+  margin: 0;
+  color: inherit;
+}
+
+.travel-cover .tc-title {
+  position: relative;
+  font-family: inherit;
+  font-size: var(--title-size);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.travel-cover .tc-eyebrow {
+  font: 600 3cqw/1.2 var(--font-ui);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.travel-cover .tc-dates {
+  font-size: 3.8cqw;
+  font-style: italic;
+}
+
+.travel-cover .tc-places {
+  position: relative;
+  font: 600 2.7cqw/1.5 var(--font-ui);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.travel-cover .tc-farewell {
+  position: relative;
+  font-size: 4.2cqw;
+  font-style: italic;
+  opacity: 0.85;
+}
+
+.tc-photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tc-emblem {
+  position: relative;
+  flex: none;
+  width: 18cqw;
+  height: 18cqw;
+  opacity: 0.85;
+}
+
+.tc-hole {
+  fill: var(--cover);
+}
+
+/* Pressed into the board rather than printed on it. */
+.travel-cover[data-design='cloth'] .tc-title,
+.travel-cover[data-design='journal'] .tc-places,
+.travel-cover[data-design='journal'] .tc-farewell,
+.tc-emblem {
+  text-shadow:
+    0 -0.25cqw 0 rgb(0 0 0 / 0.35),
+    0 0.25cqw 0 rgb(255 255 255 / 0.12);
+  filter: drop-shadow(0 -0.25cqw 0 rgb(0 0 0 / 0.3));
+}
+
+/* Cloth: quiet and minimal, a blind-tooled frame and the title. */
+.travel-cover[data-design='cloth'] .tc-title {
+  font-family: var(--font-display);
+}
+
+.tc-frame {
+  position: absolute;
+  inset: 6cqw 6cqw 6cqw 9cqw;
+  border: 0.45cqw solid color-mix(in srgb, var(--ink) 50%, transparent);
+  outline: 0.25cqw solid color-mix(in srgb, var(--ink) 35%, transparent);
+  outline-offset: -1.8cqw;
+  border-radius: 0.8cqw;
+  pointer-events: none;
+}
+
+.tc-plate {
+  position: relative;
+  width: 54cqw;
+  aspect-ratio: 4 / 3;
+  padding: 1.3cqw;
+  background: #fbf6ea;
+  box-shadow: 0 0.6cqw 1.8cqw rgb(0 0 0 / 0.35);
+}
+
+.tc-rule {
+  position: relative;
+  width: 14cqw;
+  height: 0.4cqw;
+  background: currentColor;
+  opacity: 0.6;
+}
+
+/* Journal: stitched leather, a kraft label and an elastic band. */
+.travel-cover[data-design='journal'] {
+  padding: 12cqw 21cqw 12cqw 13cqw;
+  background:
+    radial-gradient(130% 90% at 25% 8%, rgb(255 255 255 / 0.13), transparent 55%),
+    radial-gradient(110% 80% at 85% 100%, rgb(0 0 0 / 0.32), transparent 60%), var(--leather),
+    var(--cover);
+}
+
+.tc-stitch {
+  position: absolute;
+  inset: 4cqw 4cqw 4cqw 6.5cqw;
+  border: 0.55cqw dashed color-mix(in srgb, var(--ink) 60%, transparent);
+  border-radius: 2.4cqw;
+  outline: 0.3cqw solid rgb(0 0 0 / 0.18);
+  outline-offset: 1cqw;
+  pointer-events: none;
+}
+
+.tc-band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 10cqw;
+  z-index: 3;
+  width: 4.4cqw;
+  background:
+    repeating-linear-gradient(0deg, rgb(255 255 255 / 0.06) 0 0.4cqw, transparent 0.4cqw 1cqw),
+    linear-gradient(90deg, #17110d, #3a2d24 45%, #1f1712);
+  box-shadow:
+    -0.7cqw 0 1.2cqw rgb(0 0 0 / 0.45),
+    0.4cqw 0 0.6cqw rgb(0 0 0 / 0.3);
+}
+
+.tc-label {
+  position: relative;
+  display: grid;
+  gap: 1.6cqw;
+  width: 100%;
+  padding: 5.5cqw 5cqw;
+  border-radius: 0.6cqw;
+  background: var(--fibres), var(--kraft);
+  color: #3b2a1f;
+  box-shadow:
+    inset 0 0 0 0.9cqw var(--kraft),
+    inset 0 0 0 1.15cqw rgb(59 42 31 / 0.4),
+    0 0.6cqw 1.4cqw rgb(0 0 0 / 0.45);
+  transform: rotate(-1.2deg);
+}
+
+.travel-cover[data-design='journal'] .tc-label .tc-title {
+  font-size: calc(var(--title-size) * 0.95);
+}
+
+.travel-cover[data-design='journal'] .tc-label .tc-eyebrow {
+  color: #8a4b2a;
+  font-size: 2.5cqw;
+}
+
+.travel-cover[data-design='journal'] .tc-label .tc-dates {
+  font-size: 3.3cqw;
+}
+
+.travel-cover[data-design='journal'] .tc-emblem {
+  width: 13cqw;
+  height: 13cqw;
+  opacity: 0.55;
+}
+
+.tc-polaroid {
+  position: relative;
+  width: 44cqw;
+  padding: 2cqw 2cqw 6.5cqw;
+  background: #fbf8f1;
+  box-shadow: 0 0.8cqw 1.8cqw rgb(0 0 0 / 0.45);
+  transform: rotate(4deg);
+}
+
+.tc-polaroid .tc-photo {
+  height: auto;
+  aspect-ratio: 1;
+}
+
+.travel-cover.with-photo[data-design='journal'] .tc-emblem {
+  display: none;
+}
+
+/* Atlas: meridians across the board, a compass rose, a gilt cartouche. */
+.travel-cover[data-design='atlas'] {
+  color: var(--foil);
+}
+
+.tc-graticule {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 0.35;
+  opacity: 0.2;
+}
+
+.tc-rose {
+  position: absolute;
+  right: -14cqw;
+  bottom: -12cqw;
+  width: 60cqw;
+  height: 60cqw;
+  color: var(--ink);
+  opacity: 0.16;
+}
+
+.tc-cartouche {
+  position: relative;
+  display: grid;
+  gap: 1.6cqw;
+  width: 100%;
+  padding: 6cqw 6cqw;
+  border: 0.6cqw solid var(--foil);
+  outline: 0.3cqw solid var(--foil);
+  outline-offset: -1.9cqw;
+  border-radius: 3cqw;
+  background: color-mix(in srgb, var(--cover) 80%, #000);
+  box-shadow: 0 0.8cqw 2cqw rgb(0 0 0 / 0.35);
+}
+
+.travel-cover[data-design='atlas'] .tc-title {
+  font-style: italic;
+  font-weight: 500;
+  font-size: calc(var(--title-size) * 0.9);
+}
+
+.tc-medallion {
+  position: relative;
+  width: 38cqw;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 50%;
+  border: 1cqw solid var(--foil);
+  box-shadow: 0 0.8cqw 2cqw rgb(0 0 0 / 0.4);
+}
+
+/* Passport: everything in gold foil, a crest, and the chip mark. */
+.travel-cover[data-design='passport'] {
+  justify-content: space-between;
+  padding: 13cqw 11cqw 10cqw 15cqw;
+  color: var(--foil);
+  font-family: 'Playfair Display Variable', Georgia, serif;
+  background:
+    radial-gradient(circle at 0.5px 0.5px, rgb(255 255 255 / 0.07) 0.6px, transparent 1px) 0 0 / 3px
+      3px,
+    radial-gradient(120% 80% at 70% 0%, rgb(255 255 255 / 0.1), transparent 60%),
+    var(--cover);
+}
+
+.travel-cover[data-design='passport'] .tc-eyebrow,
+.travel-cover[data-design='passport'] .tc-title {
+  background: linear-gradient(100deg, #b38a3d, #f6e2a4 40%, #c89d4a 60%, #f0d58c) 0 0 / 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0.2cqw 0 rgb(0 0 0 / 0.35));
+  animation: tc-foil 7s ease-in-out infinite alternate;
+}
+
+.travel-cover[data-design='passport'] .tc-eyebrow {
+  font:
+    600 3.4cqw/1.2 'Playfair Display Variable',
+    Georgia,
+    serif;
+  letter-spacing: 0.42em;
+}
+
+.travel-cover[data-design='passport'] .tc-title {
+  font-size: calc(var(--title-size) * 0.78);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.tc-crest {
+  width: 52cqw;
+  color: var(--foil);
+  filter: drop-shadow(0 0.25cqw 0 rgb(0 0 0 / 0.35));
+}
+
+.tc-seal {
+  width: 40cqw;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 0.8cqw var(--foil),
+    0 0 0 1.8cqw color-mix(in srgb, var(--cover) 80%, #000),
+    0 0 0 2.2cqw var(--foil);
+}
+
+.tc-chip {
+  width: 12cqw;
+  color: var(--foil);
+}
+
+@keyframes tc-foil {
+  to {
+    background-position: 100% 0;
+  }
+}
+
+/* Airmail: a striped envelope, a stamp, a postmark and an address. */
+.travel-cover[data-design='airmail'] {
+  padding: 0;
+  color: #2b2a33;
+  font-family: 'Special Elite', 'American Typewriter', monospace;
+  background: repeating-linear-gradient(
+    135deg,
+    #c8372d 0 5cqw,
+    #f7efe0 5cqw 7.5cqw,
+    #1f4e89 7.5cqw 12.5cqw,
+    #f7efe0 12.5cqw 15cqw
+  );
+}
+
+.tc-envelope {
+  position: absolute;
+  inset: 3.6cqw;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3cqw;
+  padding: 8cqw 8cqw 8cqw 10cqw;
+  text-align: left;
+  border-radius: 0.6cqw;
+  background: var(--fibres), #f7efe0;
+  box-shadow: inset 0 0 3cqw rgb(120 90 50 / 0.2);
+}
+
+.travel-cover .tc-par-avion {
+  display: grid;
+  padding: 1.3cqw 2.4cqw;
+  border-radius: 0.4cqw;
+  background: #1f4e89;
+  color: #f7efe0;
+  font: 700 2.8cqw/1.25 var(--font-ui);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.tc-par-avion span {
+  font-weight: 500;
+  font-size: 2.1cqw;
+}
+
+.tc-stamp {
+  position: absolute;
+  top: 6cqw;
+  right: 7cqw;
+  width: 24cqw;
+  height: 29cqw;
+  padding: 2cqw;
+  background:
+    radial-gradient(circle, #f7efe0 0.95cqw, transparent 1.05cqw) -1.5cqw -1.5cqw / 3cqw 3cqw,
+    #fffaf0;
+  box-shadow: 0 0.4cqw 0.9cqw rgb(0 0 0 / 0.2);
+  transform: rotate(3deg);
+}
+
+.tc-stamp > img,
+.tc-stamp > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tc-postmark {
+  position: absolute;
+  top: 20cqw;
+  right: 13cqw;
+  z-index: 2;
+  width: 44cqw;
+  color: rgb(40 50 85 / 0.72);
+  transform: rotate(-10deg);
+  mix-blend-mode: multiply;
+}
+
+.tc-postmark-place,
+.tc-postmark-date {
+  fill: currentColor;
+  font-family: var(--font-ui);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tc-postmark-place {
+  font-size: 5.5px;
+}
+
+.tc-postmark-date {
+  font-size: 6px;
+}
+
+.travel-cover[data-design='airmail'] .tc-title {
+  margin-top: 26cqw;
+  font-size: calc(var(--title-size) * 0.88);
+  font-weight: 400;
+}
+
+.travel-cover .tc-address {
+  width: 100%;
+  padding: 0;
+  list-style: none;
+  font:
+    600 6cqw/1.15 'Caveat Variable',
+    cursive;
+  color: #1f4e89;
+}
+
+.tc-address li {
+  padding: 0.6cqw 0 0.3cqw 4cqw;
+  border-bottom: 0.3cqw solid rgb(43 42 51 / 0.3);
+}
+
+.travel-cover[data-design='airmail'] .tc-dates {
+  margin-top: auto;
+  font-style: normal;
+  font-size: 3.6cqw;
+}
+
+/* Luggage: kraft board, a tag on a string, and stickers from each place. */
+.travel-cover[data-design='luggage'] {
+  padding: 0;
+  color: #2b2118;
+  background:
+    radial-gradient(120% 80% at 75% 0%, rgb(255 255 255 / 0.16), transparent 60%), var(--fibres),
+    var(--cover);
+}
+
+.tc-string {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: #f4ead4;
+  stroke-width: 0.9;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0.6px 0.4px rgb(0 0 0 / 0.35));
+}
+
+.tc-tag {
+  position: absolute;
+  top: 22cqw;
+  left: 14cqw;
+  z-index: 2;
+  display: grid;
+  gap: 1.4cqw;
+  width: 60cqw;
+  padding: 13cqw 6cqw 7cqw;
+  border-radius: 12cqw 12cqw 1.6cqw 1.6cqw / 7cqw 7cqw 1.6cqw 1.6cqw;
+  background: var(--fibres), #f3e4c4;
+  box-shadow: 0 1cqw 2cqw rgb(0 0 0 / 0.35);
+  transform-origin: 50% 0;
+  rotate: -7deg;
+  animation: tc-sway 4.5s ease-in-out infinite;
+}
+
+.tc-tag::after {
+  content: '';
+  position: absolute;
+  inset: 2cqw;
+  border: 0.35cqw dashed rgb(59 42 31 / 0.35);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.tc-eyelet {
+  position: absolute;
+  top: 4cqw;
+  left: 50%;
+  width: 6cqw;
+  height: 6cqw;
+  margin-left: -3cqw;
+  border-radius: 50%;
+  background: var(--cover);
+  box-shadow:
+    0 0 0 1.4cqw #c9b48a,
+    inset 0 0.4cqw 0.6cqw rgb(0 0 0 / 0.4);
+}
+
+.travel-cover[data-design='luggage'] .tc-eyebrow {
+  color: #a0522d;
+  font-size: 2.6cqw;
+}
+
+.travel-cover[data-design='luggage'] .tc-title {
+  font:
+    700 calc(var(--title-size) * 1.12) / 1 'Caveat Variable',
+    cursive;
+}
+
+.travel-cover[data-design='luggage'] .tc-dates {
+  font:
+    3.3cqw 'Special Elite',
+    monospace;
+}
+
+.travel-cover .tc-stickers {
+  position: absolute;
+  right: 5cqw;
+  bottom: 5cqw;
+  left: 10cqw;
+  z-index: 1;
+  display: flex;
+  justify-content: flex-end;
+  padding: 0;
+  list-style: none;
+}
+
+.tc-stickers li {
+  display: grid;
+  place-items: center;
+  width: 23cqw;
+  aspect-ratio: 1;
+  padding: 3.4cqw;
+  border-radius: 50%;
+  background: var(--sticker);
+  color: #fff8ec;
+  font: 700 2.7cqw/1.1 var(--font-ui);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+  box-shadow:
+    inset 0 0 0 1cqw var(--sticker),
+    inset 0 0 0 1.4cqw #fff8ec,
+    0 0.4cqw 0.9cqw rgb(0 0 0 / 0.3);
+  rotate: var(--tilt);
+}
+
+.tc-stickers li + li {
+  margin-left: -2.5cqw;
+}
+
+.tc-taped {
+  position: absolute;
+  top: 7cqw;
+  right: 7cqw;
+  z-index: 1;
+  width: 34cqw;
+  aspect-ratio: 1;
+  padding: 1.6cqw;
+  background: #fbf8f1;
+  box-shadow: 0 0.6cqw 1.4cqw rgb(0 0 0 / 0.35);
+  rotate: 6deg;
+}
+
+.tc-taped::after {
+  content: '';
+  position: absolute;
+  top: -2.4cqw;
+  left: 32%;
+  width: 14cqw;
+  height: 5cqw;
+  background: rgb(244 236 210 / 0.75);
+  rotate: -5deg;
+}
+
+.travel-cover.with-photo .tc-tag {
+  top: 36cqw;
+  left: 9cqw;
+}
+
+@keyframes tc-sway {
+  50% {
+    rotate: -3deg;
+  }
+}
+
+/* Backs: the same make, signing off, mirrored: the spine is on the right. */
+.travel-cover.back .tc-band {
+  right: auto;
+  left: 10cqw;
+}
+
+.travel-cover.back .tc-stitch {
+  inset: 4cqw 6.5cqw 4cqw 4cqw;
+}
+
+.travel-cover.back[data-design='luggage'],
+.travel-cover.back[data-design='airmail'] {
+  padding: 11cqw;
+}
+
+.travel-cover.back[data-design='luggage'] .tc-emblem {
+  opacity: 0.4;
+}
+
+.travel-cover.back .tc-envelope {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.travel-cover.back .tc-postmark {
+  position: relative;
+  inset: auto;
+  width: 60cqw;
+}
+
+/* On a shelf or in a preview, covers only move while pointed at. */
+.travel-cover[data-animate='hover'] .tc-tag,
+.travel-cover[data-animate='hover'] .tc-eyebrow,
+.travel-cover[data-animate='hover'] .tc-title {
+  animation-play-state: paused;
+}
+
+.cover-link:hover .travel-cover[data-animate='hover'] *,
+.cover-link:focus-visible .travel-cover[data-animate='hover'] * {
+  animation-play-state: running;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .travel-cover * {
+    animation: none !important;
+  }
+}
+
+/* A style card: the book's cover in that style beside one of its pages. */
+.theme-sample {
+  display: grid;
+  grid-template-columns: 38% 1fr;
+  gap: 0.7rem;
+  align-items: center;
+}
+
+.theme-cover {
+  box-shadow: var(--shadow-sm);
+}

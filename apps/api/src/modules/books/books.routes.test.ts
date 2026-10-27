@@ -35,7 +35,7 @@ describe('creating and reading books', () => {
       id: expect.any(String),
       ...JAPAN,
       description: '',
-      theme: { kind: 'preset', id: 'comic', version: 1 },
+      theme: { kind: 'preset', id: 'traveller', version: 1 },
       days: [],
       chapters: [],
       chaptersEdited: false,
@@ -134,7 +134,7 @@ describe('choosing a theme', () => {
     const { id } = (await asha.post('/api/books').send(JAPAN)).body.book;
     const res = await asha.put(`/api/books/${id}/theme`).send({ id: 'scrapbook' });
     expect(res.status).toBe(200);
-    expect(res.body.book.theme).toEqual({ kind: 'preset', id: 'scrapbook', version: 1 });
+    expect(res.body.book.theme).toEqual({ kind: 'preset', id: 'scrapbook', version: 2 });
     expect((await asha.get(`/api/books/${id}`)).body.book.theme.id).toBe('scrapbook');
   });
 
@@ -144,8 +144,8 @@ describe('choosing a theme', () => {
     await BookModel.updateOne({ _id: id }, { $set: { 'theme.version': 7 } });
     expect(
       (await asha.patch(`/api/books/${id}`).send({ title: 'Edited' })).body.book.theme,
-    ).toEqual({ kind: 'preset', id: 'comic', version: 7 });
-    const res = await asha.put(`/api/books/${id}/theme`).send({ id: 'comic' });
+    ).toEqual({ kind: 'preset', id: 'traveller', version: 7 });
+    const res = await asha.put(`/api/books/${id}/theme`).send({ id: 'traveller' });
     expect(res.body.book.theme.version).toBe(1);
   });
 
@@ -162,7 +162,7 @@ describe('choosing a theme', () => {
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_FAILED');
     }
-    expect((await BookModel.findById(id))?.theme.id).toBe('comic');
+    expect((await BookModel.findById(id))?.theme.id).toBe('traveller');
   });
 });
 
@@ -216,7 +216,7 @@ describe('ownership: another user gets 404 and changes nothing', () => {
     const res = await ben.put(`/api/books/${bookId}/theme`).send({ id: 'atlas' });
     expect(res.status).toBe(404);
     expect(res.body).toEqual(NOT_FOUND);
-    expect((await BookModel.findById(bookId))?.theme.id).toBe('comic');
+    expect((await BookModel.findById(bookId))?.theme.id).toBe('traveller');
   });
 
   it('cannot delete it', async () => {

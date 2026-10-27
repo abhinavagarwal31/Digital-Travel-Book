@@ -1,7 +1,10 @@
-import { PRESET_THEMES, resolveTheme, type Book, type ThemeId } from '@tb/shared';
-import { useState } from 'react';
+import { coverDesignOf, PRESET_THEMES, resolveTheme, type Book, type ThemeId } from '@tb/shared';
+import { useState, type CSSProperties } from 'react';
 import { Link } from 'react-router';
 import { useSetTheme } from '../lib/books.ts';
+import { formatDateRange } from '../lib/dates.ts';
+import { photoImageUrl } from '../lib/photos.ts';
+import { CoverArt, coverColour } from './BookCover.tsx';
 import { themeStyle } from '../lib/theme.ts';
 
 /**
@@ -16,6 +19,9 @@ export function ThemePicker({ book }: { book: Book }) {
   // A choice shows at once, while it saves; if saving fails it goes back.
   const [picked, setPicked] = useState<ThemeId | null>(null);
   const chosen = picked ?? current.id;
+  const coverPhoto = book.overrides.coverPhotoId
+    ? photoImageUrl(book.overrides.coverPhotoId, 'thumb')
+    : null;
 
   return (
     <section className="stack" aria-labelledby="style-heading">
@@ -41,17 +47,38 @@ export function ThemePicker({ book }: { book: Book }) {
                 setTheme.mutate(id, { onSettled: () => setPicked(null) });
               }}
             />
-            <span
-              className="theme-preview"
-              style={themeStyle(t)}
-              data-frame={t.photos.frame}
-              data-look={t.look ?? 'classic'}
-              aria-hidden="true"
-            >
-              <span className="theme-preview-eyebrow">Day 3</span>
-              <span className="theme-preview-title">Kyoto</span>
-              <span className="theme-preview-photo" />
-              <span className="theme-preview-caption">Lanterns at dusk</span>
+            <span className="theme-sample" aria-hidden="true">
+              <span
+                className={`cover theme-cover ${coverDesignOf(t) === 'comic' ? 'comic' : 'designed'}`}
+                style={
+                  {
+                    '--cover': t.colors.cover ?? coverColour(book.id),
+                    '--cover-ink': t.colors.coverInk,
+                  } as CSSProperties
+                }
+              >
+                <CoverArt
+                  design={coverDesignOf(t)}
+                  bookId={book.id}
+                  title={book.title}
+                  dates={formatDateRange(book.startDate, book.endDate)}
+                  places={book.destinations}
+                  photoUrl={coverPhoto}
+                  animate="hover"
+                  headingLevel={null}
+                />
+              </span>
+              <span
+                className="theme-preview"
+                style={themeStyle(t)}
+                data-frame={t.photos.frame}
+                data-look={t.look ?? 'classic'}
+              >
+                <span className="theme-preview-eyebrow">Day 3</span>
+                <span className="theme-preview-title">Kyoto</span>
+                <span className="theme-preview-photo" />
+                <span className="theme-preview-caption">Lanterns at dusk</span>
+              </span>
             </span>
             <span className="theme-card-text">
               <strong>{t.name}</strong>

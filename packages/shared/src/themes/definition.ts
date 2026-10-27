@@ -38,6 +38,20 @@ export const PHOTO_FRAMES = [
  * released before this existed render exactly as they did.
  */
 export const PAGE_LOOKS = ['classic', 'comic'] as const;
+/**
+ * What the cover is made as, each something a traveller carries: a plain
+ * cloth board, a stitched leather journal, an old atlas, a passport, an
+ * airmail envelope, a kraft board with a luggage tag, or a comic panel.
+ */
+export const COVER_DESIGNS = [
+  'cloth',
+  'journal',
+  'atlas',
+  'passport',
+  'airmail',
+  'luggage',
+  'comic',
+] as const;
 /** Photo page layouts, named by how many photos they hold. */
 export const PHOTO_LAYOUTS = ['hero-1', 'split-2', 'mosaic-3', 'grid-4'] as const;
 
@@ -46,6 +60,7 @@ export type MapTileStyle = (typeof MAP_TILE_STYLES)[number];
 export type PhotoFrame = (typeof PHOTO_FRAMES)[number];
 export type PhotoLayout = (typeof PHOTO_LAYOUTS)[number];
 export type PageLook = (typeof PAGE_LOOKS)[number];
+export type CoverDesign = (typeof COVER_DESIGNS)[number];
 
 /** Photos on a page in each layout. */
 export const LAYOUT_CAPACITY: Record<PhotoLayout, number> = {
@@ -63,6 +78,8 @@ export const themeDefinitionSchema = z
     format: z.literal(1),
     name: z.string().trim().min(1).max(40),
     look: z.enum(PAGE_LOOKS).optional(),
+    /** Absent in versions released before covers had designs; see coverDesignOf. */
+    coverDesign: z.enum(COVER_DESIGNS).optional(),
     description: z.string().trim().max(160),
     fonts: z.strictObject({
       display: z.enum(THEME_FONTS),
@@ -91,3 +108,8 @@ export const themeDefinitionSchema = z
   });
 
 export type ThemeDefinition = z.infer<typeof themeDefinitionSchema>;
+
+/** A theme's cover: its own design, or for older versions the one that suits its look. */
+export function coverDesignOf(theme: Pick<ThemeDefinition, 'look' | 'coverDesign'>): CoverDesign {
+  return theme.coverDesign ?? (theme.look === 'comic' ? 'comic' : 'cloth');
+}

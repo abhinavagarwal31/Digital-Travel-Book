@@ -6,6 +6,7 @@ import { isoDateSchema, objectIdSchema, timeZoneSchema } from './common.ts';
 export const MAX_TRIP_DAYS = 366;
 
 export const THEME_IDS = [
+  'traveller',
   'atlas',
   'editorial',
   'scrapbook',
@@ -13,6 +14,8 @@ export const THEME_IDS = [
   'postcard',
   'midnight',
   'pastel',
+  'latte',
+  'espresso',
 ] as const;
 export type ThemeId = (typeof THEME_IDS)[number];
 

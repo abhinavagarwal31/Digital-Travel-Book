@@ -7,6 +7,7 @@ const SAMPLE_BOOK = {
   startDate: '2026-10-10',
   endDate: '2026-10-15',
   destinations: ['Tokyo', 'Kyoto', 'Osaka'],
+  theme: { kind: 'preset' as const, id: 'traveller' as const, version: 1 },
 };
 
 function RouteArt() {

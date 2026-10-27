@@ -1,9 +1,8 @@
-import type { Book, BookPage, ThemeDefinition } from '@tb/shared';
+import { coverDesignOf, type Book, type BookPage, type ThemeDefinition } from '@tb/shared';
 import type { CSSProperties } from 'react';
 import { formatDateRange, formatTripLength } from '../../lib/dates.ts';
 import { photoImageUrl } from '../../lib/photos.ts';
-import { coverColour } from '../BookCover.tsx';
-import { ComicBackCover, ComicCover, comicColour } from '../ComicCover.tsx';
+import { BackCoverArt, CoverArt, coverColour } from '../BookCover.tsx';
 import { RouteMapView } from './RouteMapView.tsx';
 
 const longDate = new Intl.DateTimeFormat('en-GB', {
@@ -65,11 +64,12 @@ export function PageView({ page, index, book, theme, ownerName }: PageViewProps)
     case 'cover':
       return (
         <div className="page cover-page" style={cover}>
-          <ComicCover
+          <CoverArt
+            design={coverDesignOf(theme)}
+            bookId={book.id}
             title={book.title}
             dates={formatDateRange(book.startDate, book.endDate)}
             places={book.destinations}
-            colour={comicColour(book.id)}
             photoUrl={page.photoId ? photoImageUrl(page.photoId, 'page') : null}
           />
         </div>
@@ -244,7 +244,7 @@ export function PageView({ page, index, book, theme, ownerName }: PageViewProps)
     case 'back-cover':
       return (
         <div className="page cover-page back-cover" style={cover}>
-          <ComicBackCover colour={comicColour(book.id)} />
+          <BackCoverArt design={coverDesignOf(theme)} bookId={book.id} />
         </div>
       );
   }

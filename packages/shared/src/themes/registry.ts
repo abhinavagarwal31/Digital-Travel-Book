@@ -1,12 +1,19 @@
 import { THEME_IDS, type ThemeId } from '../schemas/book.ts';
 import { atlasV1 } from './atlas.v1.ts';
+import { atlasV2 } from './atlas.v2.ts';
 import { comicV1 } from './comic.v1.ts';
 import { themeDefinitionSchema, type ThemeDefinition } from './definition.ts';
 import { editorialV1 } from './editorial.v1.ts';
+import { espressoV1 } from './espresso.v1.ts';
+import { latteV1 } from './latte.v1.ts';
 import { midnightV1 } from './midnight.v1.ts';
+import { midnightV2 } from './midnight.v2.ts';
 import { pastelV1 } from './pastel.v1.ts';
 import { postcardV1 } from './postcard.v1.ts';
+import { postcardV2 } from './postcard.v2.ts';
 import { scrapbookV1 } from './scrapbook.v1.ts';
+import { scrapbookV2 } from './scrapbook.v2.ts';
+import { travellerV1 } from './traveller.v1.ts';
 
 /**
  * Every released version of every preset, oldest first. Versions are only ever
@@ -15,19 +22,23 @@ import { scrapbookV1 } from './scrapbook.v1.ts';
  * theme fails every test rather than one reader's book.
  */
 const PRESETS: Record<ThemeId, readonly ThemeDefinition[]> = {
-  atlas: [atlasV1],
+  traveller: [travellerV1],
+  atlas: [atlasV1, atlasV2],
   editorial: [editorialV1],
-  scrapbook: [scrapbookV1],
+  scrapbook: [scrapbookV1, scrapbookV2],
   comic: [comicV1],
-  postcard: [postcardV1],
-  midnight: [midnightV1],
+  postcard: [postcardV1, postcardV2],
+  midnight: [midnightV1, midnightV2],
   pastel: [pastelV1],
+  latte: [latteV1],
+  espresso: [espressoV1],
 };
 for (const versions of Object.values(PRESETS)) {
   for (const definition of versions) themeDefinitionSchema.parse(definition);
 }
 
-export const DEFAULT_THEME_ID: ThemeId = 'editorial';
+/** New books start here: a plain leather journal, quiet enough for any trip. */
+export const DEFAULT_THEME_ID: ThemeId = 'traveller';
 
 export const latestThemeVersion = (id: ThemeId) => PRESETS[id].length;
 
