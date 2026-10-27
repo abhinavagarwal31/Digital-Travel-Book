@@ -24,6 +24,18 @@ function Photo({ id, className }: { id: string; className?: string }) {
   );
 }
 
+/** A photo with its caption beneath, when it has one. */
+function CaptionedPhoto({ id, caption }: { id: string; caption: string | undefined }) {
+  return (
+    <figure className="page-photo">
+      <Photo id={id} />
+      {caption && <figcaption>{caption}</figcaption>}
+    </figure>
+  );
+}
+
+const dayEyebrow = (dayNumber: number) => (dayNumber >= 1 ? `Day ${dayNumber}` : 'Before the trip');
+
 interface PageViewProps {
   page: BookPage;
   index: number;
@@ -146,11 +158,10 @@ export function PageView({ page, index, book, ownerName }: PageViewProps) {
     case 'day':
       return (
         <div className="page day-page">
-          <p className="page-eyebrow">
-            {page.dayNumber >= 1 ? `Day ${page.dayNumber}` : 'Before the trip'}
-          </p>
+          <p className="page-eyebrow">{dayEyebrow(page.dayNumber)}</p>
           <h2>{longDate.format(new Date(`${page.dayDate}T00:00:00Z`))}</h2>
           <Photo id={page.heroPhotoId} className="day-hero" />
+          {page.heroCaption && <p className="day-caption">{page.heroCaption}</p>}
           <p className="day-meta">
             {page.photoCount} {page.photoCount === 1 ? 'photo' : 'photos'}
             {page.timeRange &&
@@ -162,12 +173,34 @@ export function PageView({ page, index, book, ownerName }: PageViewProps) {
         </div>
       );
 
+    case 'diary':
+      return (
+        <div className={`page diary-page${page.continued ? ' continued' : ''}`}>
+          {page.opensDay ? (
+            <>
+              <p className="page-eyebrow">{dayEyebrow(page.dayNumber)}</p>
+              <h2>{longDate.format(new Date(`${page.dayDate}T00:00:00Z`))}</h2>
+            </>
+          ) : (
+            <p className="page-eyebrow diary-eyebrow">
+              {dayEyebrow(page.dayNumber)} · {page.continued ? 'Diary, continued' : 'Diary'}
+            </p>
+          )}
+          <div className="diary-text">
+            {page.paragraphs.map((text, i) => (
+              <p key={i}>{text}</p>
+            ))}
+          </div>
+          {number}
+        </div>
+      );
+
     case 'photos':
       return (
         <div className={`page photos-page count-${page.photoIds.length}`}>
           <div className="photo-layout">
             {page.photoIds.map((id) => (
-              <Photo key={id} id={id} />
+              <CaptionedPhoto key={id} id={id} caption={page.captions[id]} />
             ))}
           </div>
           {number}

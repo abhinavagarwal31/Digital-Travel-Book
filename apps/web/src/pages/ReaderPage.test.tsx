@@ -104,3 +104,37 @@ it('opens each chapter with its map, after a map of the whole trip', async () =>
   expect(screen.getAllByText(/© Stadia Maps/).length).toBeGreaterThan(0);
   expect(screen.getByRole('heading', { name: 'Neon nights' })).toBeTruthy();
 });
+
+it('prints the diary after the day opener, with captions under the photos', async () => {
+  const withWords = {
+    ...BOOK,
+    days: [{ date: '2026-10-10', diary: 'Landed at dawn.\n\nRamen at midnight.' }],
+  };
+  mockApi({
+    'GET /auth/me': { status: 200, body: { user: ASHA } },
+    [`GET /books/${BOOK.id}`]: { status: 200, body: { book: withWords } },
+    [`GET /books/${BOOK.id}/photos`]: {
+      status: 200,
+      body: {
+        photos: [
+          { ...photo('a', '2026-10-10', '09:00', 35.68, 139.76), caption: 'First light' },
+          { ...photo('b', '2026-10-10', '15:00', 35.71, 139.8), caption: 'Shibuya at dusk' },
+        ],
+      },
+    },
+  });
+  wideScreen();
+  renderApp(`/books/${BOOK.id}/read`);
+
+  const toc = await screen.findByRole('combobox', { name: 'Go to' });
+  const day = within(toc)
+    .getAllByRole('option')
+    .find((o) => o.textContent?.includes('Day 1')) as HTMLOptionElement;
+  fireEvent.change(toc, { target: { value: day.value } });
+
+  expect(await screen.findByText('First light')).toBeTruthy();
+  expect(screen.getByText('Landed at dawn.')).toBeTruthy();
+  expect(screen.getByText('Ramen at midnight.')).toBeTruthy();
+  expect(screen.getByText('Day 1 · Diary')).toBeTruthy();
+  expect(screen.getByText('Shibuya at dusk')).toBeTruthy();
+});

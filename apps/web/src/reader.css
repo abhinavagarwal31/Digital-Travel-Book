@@ -464,10 +464,6 @@
   grid-template: 1.3fr 1fr / 1fr 1fr;
 }
 
-.count-3 .photo-layout img:first-child {
-  grid-column: 1 / -1;
-}
-
 .count-4 .photo-layout {
   grid-template: 1fr 1fr / 1fr 1fr;
 }
@@ -630,4 +626,75 @@
   display: block;
   font: 2.1cqw var(--font-ui);
   color: var(--paper-muted);
+}
+
+/* Captions: quiet italic beneath the photo, never pushing it off the page. */
+.page-photo {
+  margin: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 1cqw;
+}
+
+.page-photo figcaption,
+.day-caption {
+  font-style: italic;
+  font-size: 2.6cqw;
+  line-height: 1.35;
+  color: #574b3d;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.count-1 .page-photo figcaption,
+.count-2 .page-photo figcaption {
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  font-size: 2.9cqw;
+}
+
+.count-3 .page-photo:first-child {
+  grid-column: 1 / -1;
+}
+
+.day-caption {
+  margin-top: 1.6cqw;
+  font-size: 3cqw;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+/* The diary: set like a printed journal. Type size and measure match
+   DIARY_BUDGET in @tb/shared, which decides how much text each page gets. */
+.diary-page h2 {
+  font-size: 6.4cqw;
+  margin-bottom: 4cqw;
+}
+
+.diary-eyebrow {
+  margin-bottom: 4cqw;
+}
+
+.diary-text {
+  font-size: 3.3cqw;
+  line-height: 1.55;
+  color: var(--paper-ink);
+  hyphens: auto;
+  overflow-wrap: anywhere;
+}
+
+.diary-text p + p {
+  margin-top: 0.7em;
+}
+
+.diary-page:not(.continued) .diary-text p:first-child::first-letter {
+  float: left;
+  font-size: 3.1em;
+  line-height: 0.85;
+  padding: 0.06em 0.1em 0 0;
+  color: var(--paper-accent);
 }

@@ -20,7 +20,7 @@ function contents(pages: BookPage[], startDate: string) {
       const named = !/^chapter\b/i.test(page.title);
       return [{ label: named ? `${page.number}. ${page.title}` : page.title, index }];
     }
-    if (page.kind === 'day') {
+    if (page.kind === 'day' || (page.kind === 'diary' && page.opensDay)) {
       return [{ label: `\u2003${formatDayHeading(page.dayDate, startDate)}`, index }];
     }
     if (page.kind === 'closing') return [{ label: 'The end', index }];

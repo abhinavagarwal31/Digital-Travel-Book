@@ -3,6 +3,7 @@ import { contentDays, resolveChapters } from '../organize/structure.ts';
 import { DEFAULT_ORGANIZE_CONFIG, type Chapter, type OrganizablePhoto } from '../organize/types.ts';
 import { tripLengthDays } from '../schemas/book.ts';
 import { chapterRouteMap, tripRouteMap, type RouteMap } from './maps.ts';
+import { DIARY_BUDGET, paginateText } from './paginate.ts';
 
 /** The book's pages, derived from travel data on every render and never stored. */
 export type BookPage =
@@ -31,17 +32,34 @@ export type BookPage =
       dayDate: string;
       dayNumber: number;
       heroPhotoId: string;
+      heroCaption: string;
       photoCount: number;
       /** First and last local times of the day's photos, when known ("08:05"). */
       timeRange: [string, string] | null;
     }
-  | { kind: 'photos'; dayDate: string; photoIds: string[] }
+  | {
+      kind: 'diary';
+      dayDate: string;
+      dayNumber: number;
+      paragraphs: string[];
+      /** The first paragraph carries on from the page before. */
+      continued: boolean;
+      /** The day has no photos, so this page opens it and carries its heading. */
+      opensDay: boolean;
+    }
+  | {
+      kind: 'photos';
+      dayDate: string;
+      photoIds: string[];
+      /** Captions by photo id; photos without one are not listed. */
+      captions: Record<string, string>;
+    }
   | { kind: 'closing'; dayCount: number; photoCount: number }
   | { kind: 'blank' }
   | { kind: 'back-cover' };
 
 /** The photo fields composition needs (locations too, for the maps); the API's Photo fits. */
-export type ComposablePhoto = OrganizablePhoto;
+export type ComposablePhoto = OrganizablePhoto & { caption: string };
 
 export interface ComposableBook {
   startDate: string;
@@ -81,26 +99,47 @@ function inTimeOrder(photos: ComposablePhoto[]): ComposablePhoto[] {
   );
 }
 
-function dayPages(book: ComposableBook, dayDate: string, photos: ComposablePhoto[]): BookPage[] {
+/**
+ * A day: its opener (the first photo as hero), the diary, then the remaining
+ * photos four or fewer to a page. A day with a diary but no photos opens on
+ * its first diary page instead.
+ */
+function dayPages(
+  book: ComposableBook,
+  dayDate: string,
+  photos: ComposablePhoto[],
+  diary: string,
+): BookPage[] {
+  const dayNumber = tripLengthDays(book.startDate, dayDate);
   const [hero, ...rest] = inTimeOrder(photos);
-  if (!hero) return [];
-  const times = photos.flatMap((p) => (p.localDateTime ? [clock(p.localDateTime)] : [])).sort();
-  const pages: BookPage[] = [
-    {
+  const pages: BookPage[] = [];
+  if (hero) {
+    const times = photos.flatMap((p) => (p.localDateTime ? [clock(p.localDateTime)] : [])).sort();
+    pages.push({
       kind: 'day',
       dayDate,
-      dayNumber: tripLengthDays(book.startDate, dayDate),
+      dayNumber,
       heroPhotoId: hero.id,
+      heroCaption: hero.caption,
       photoCount: photos.length,
       timeRange: times.length > 0 ? [times[0] as string, times.at(-1) as string] : null,
-    },
-  ];
+    });
+  }
+  // Only a diary that opens the day shares its first page with the day's heading.
+  const budget = hero
+    ? { ...DIARY_BUDGET, firstPageLines: DIARY_BUDGET.linesPerPage }
+    : DIARY_BUDGET;
+  paginateText(diary, budget).forEach((text, i) => {
+    pages.push({ kind: 'diary', dayDate, dayNumber, ...text, opensDay: !hero && i === 0 });
+  });
   let offset = 0;
   for (const size of chunkSizes(rest.length)) {
+    const chunk = rest.slice(offset, offset + size);
     pages.push({
       kind: 'photos',
       dayDate,
-      photoIds: rest.slice(offset, offset + size).map((p) => p.id),
+      photoIds: chunk.map((p) => p.id),
+      captions: Object.fromEntries(chunk.filter((p) => p.caption).map((p) => [p.id, p.caption])),
     });
     offset += size;
   }
@@ -110,8 +149,8 @@ function dayPages(book: ComposableBook, dayDate: string, photos: ComposablePhoto
 /**
  * Deterministic page plan: cover, endpaper, title page, a map of the whole
  * trip (when two or more chapters have places on it), then each chapter: an
- * opener with its own map, and for every day with photos an opener (its first
- * photo as hero) followed by photo pages in time order. Then a closing page
+ * opener with its own map, then its days: an opener (the first photo as
+ * hero), the diary, and the remaining photos in time order. Then a closing page
  * and the back cover. Like a printed book it has an even number of pages, so
  * the back cover is always the back of the last leaf.
  *
@@ -128,16 +167,19 @@ export function composeBook(book: ComposableBook, photos: ComposablePhoto[]): Bo
     byDay.set(photo.dayDate as string, day);
   }
 
-  // Chapters as the reader sees them: every content day placed, and only
-  // chapters with photos to show (diary pages come later).
-  const diaryDates = book.days.filter((d) => d.diary !== '').map((d) => d.date);
-  const resolved = resolveChapters(book.chapters, contentDays(photos, diaryDates));
+  // Chapters as the reader sees them: every day with photos or a diary
+  // entry placed, and only chapters with something on the page.
+  const diaries = new Map(
+    book.days.filter((d) => d.diary.trim() !== '').map((d) => [d.date, d.diary]),
+  );
+  const days = contentDays(inBook, [...diaries.keys()]);
+  const resolved = resolveChapters(book.chapters, days);
   const sections: { chapter: Chapter | null; days: string[] }[] =
     resolved.length === 0
-      ? [{ chapter: null, days: [...byDay.keys()].sort() }]
+      ? [{ chapter: null, days }]
       : resolved.map((chapter) => ({
           chapter,
-          days: chapter.dayDates.filter((d) => byDay.has(d)),
+          days: chapter.dayDates.filter((d) => days.includes(d)),
         }));
   const shown = sections.filter((s) => s.days.length > 0);
 
@@ -199,11 +241,11 @@ export function composeBook(book: ComposableBook, photos: ComposablePhoto[]): Bo
     for (const dayDate of section.days) {
       const dayPhotos = byDay.get(dayDate) ?? [];
       photoCount += dayPhotos.length;
-      pages.push(...dayPages(book, dayDate, dayPhotos));
+      pages.push(...dayPages(book, dayDate, dayPhotos, diaries.get(dayDate) ?? ''));
     }
   }
 
-  pages.push({ kind: 'closing', dayCount: byDay.size, photoCount });
+  pages.push({ kind: 'closing', dayCount: days.length, photoCount });
   if (pages.length % 2 === 0) pages.push({ kind: 'blank' });
   pages.push({ kind: 'back-cover' });
   return pages;

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { chunkSizes, composeBook, type ComposablePhoto } from './compose.ts';
+import { chunkSizes, composeBook, type ComposableBook, type ComposablePhoto } from './compose.ts';
+import { DIARY_BUDGET } from './paginate.ts';
 
-const BOOK = { startDate: '2026-10-10', days: [], chapters: [] };
+const BOOK: ComposableBook = { startDate: '2026-10-10', days: [], chapters: [] };
 
 let nextId = 0;
 function photo(
@@ -21,6 +22,7 @@ function photo(
     gpsStatus: null,
     assignedBy: 'auto',
     flags: [],
+    caption: '',
     ...extra,
   };
 }
@@ -58,6 +60,7 @@ describe('composeBook', () => {
         dayDate: '2026-10-10',
         dayNumber: 1,
         heroPhotoId: day1.id,
+        heroCaption: '',
         photoCount: 1,
         timeRange: ['10:15', '10:15'],
       },
@@ -66,10 +69,11 @@ describe('composeBook', () => {
         dayDate: '2026-10-12',
         dayNumber: 3,
         heroPhotoId: early.id,
+        heroCaption: '',
         photoCount: 3,
         timeRange: ['08:05', '18:30'],
       },
-      { kind: 'photos', dayDate: '2026-10-12', photoIds: [mid.id, late.id] },
+      { kind: 'photos', dayDate: '2026-10-12', photoIds: [mid.id, late.id], captions: {} },
       { kind: 'closing', dayCount: 2, photoCount: 4 },
       { kind: 'back-cover' },
     ]);
@@ -99,7 +103,12 @@ describe('composeBook', () => {
     const pages = composeBook(BOOK, [untimed, timed, onlyUntimed]);
 
     expect(pages[3]).toMatchObject({ heroPhotoId: timed.id, timeRange: ['09:00', '09:00'] });
-    expect(pages[4]).toEqual({ kind: 'photos', dayDate: '2026-10-11', photoIds: [untimed.id] });
+    expect(pages[4]).toEqual({
+      kind: 'photos',
+      dayDate: '2026-10-11',
+      photoIds: [untimed.id],
+      captions: {},
+    });
     expect(pages[5]).toMatchObject({ kind: 'day', dayDate: '2026-10-13', timeRange: null });
   });
 
@@ -239,5 +248,107 @@ describe('composeBook with chapters and maps', () => {
     expect(
       pages.flatMap((p) => (p.kind === 'chapter' ? [`${p.number} ${p.chapterId}`] : [])),
     ).toEqual(['1 tokyo', '2 kyoto']);
+  });
+});
+
+describe('composeBook with diaries and captions', () => {
+  const diary = (date: string, text: string) => ({ date, diary: text });
+
+  it('puts the diary after the day opener and before the rest of the photos', () => {
+    const a = photo('2026-10-10', '09:00:00');
+    const b = photo('2026-10-10', '10:00:00');
+    const pages = composeBook({ ...BOOK, days: [diary('2026-10-10', 'Arrived.\n\nRamen.')] }, [
+      a,
+      b,
+    ]);
+    expect(pages.slice(3, 6)).toEqual([
+      expect.objectContaining({ kind: 'day', heroPhotoId: a.id }),
+      {
+        kind: 'diary',
+        dayDate: '2026-10-10',
+        dayNumber: 1,
+        paragraphs: ['Arrived.', 'Ramen.'],
+        continued: false,
+        opensDay: false,
+      },
+      expect.objectContaining({ kind: 'photos', photoIds: [b.id] }),
+    ]);
+  });
+
+  it('gives a day with only a diary entry its own pages, opened by the diary', () => {
+    const pages = composeBook(
+      { ...BOOK, days: [diary('2026-10-11', 'A rest day, no photos at all.')] },
+      [photo('2026-10-10', '09:00:00')],
+    );
+    expect(pages.map((p) => (p.kind === 'diary' ? `diary ${p.opensDay}` : p.kind))).toEqual([
+      'cover',
+      'endpaper',
+      'title',
+      'day',
+      'diary true',
+      'closing',
+      'blank',
+      'back-cover',
+    ]);
+    expect(pages.at(-3)).toEqual({ kind: 'closing', dayCount: 2, photoCount: 1 });
+  });
+
+  it('continues a long diary over as many pages as it needs', () => {
+    const long = Array.from({ length: 120 }, () => 'The train hummed through rice fields.').join(
+      ' ',
+    );
+    const pages = composeBook({ ...BOOK, days: [diary('2026-10-10', long)] }, [
+      photo('2026-10-10', '09:00:00'),
+    ]);
+    const diaryPages = pages.filter((p) => p.kind === 'diary');
+    expect(diaryPages.length).toBeGreaterThan(2);
+    expect(diaryPages.map((p) => p.continued)).toEqual([
+      false,
+      ...Array(diaryPages.length - 1).fill(true),
+    ]);
+    expect(diaryPages.every((p) => !p.opensDay)).toBe(true);
+  });
+
+  it('gives a full page to the first diary page unless it also carries the day heading', () => {
+    // Exactly one full page of lines, each line a single word that fills it.
+    const word = 'x'.repeat(DIARY_BUDGET.charsPerLine);
+    const onePage = Array.from({ length: DIARY_BUDGET.linesPerPage }, () => word).join(' ');
+    const count = (photos: ComposablePhoto[]) =>
+      composeBook({ ...BOOK, days: [diary('2026-10-10', onePage)] }, photos).filter(
+        (p) => p.kind === 'diary',
+      ).length;
+    expect(count([photo('2026-10-10', '09:00:00')])).toBe(1);
+    expect(count([])).toBe(2);
+  });
+
+  it('ignores an empty or blank diary entry', () => {
+    const pages = composeBook({ ...BOOK, days: [diary('2026-10-12', '  \n ')] }, []);
+    expect(pages.some((p) => p.kind === 'diary')).toBe(false);
+    expect(pages).toContainEqual({ kind: 'closing', dayCount: 0, photoCount: 0 });
+  });
+
+  it("carries each photo's caption onto its page, and the hero's onto the opener", () => {
+    const hero = photo('2026-10-10', '09:00:00', { caption: 'First light' });
+    const plain = photo('2026-10-10', '10:00:00');
+    const named = photo('2026-10-10', '11:00:00', { caption: 'Shibuya crossing' });
+    const pages = composeBook(BOOK, [hero, plain, named]);
+    expect(pages[3]).toMatchObject({ kind: 'day', heroCaption: 'First light' });
+    expect(pages[4]).toMatchObject({
+      kind: 'photos',
+      photoIds: [plain.id, named.id],
+      captions: { [named.id]: 'Shibuya crossing' },
+    });
+  });
+
+  it('puts a diary-only day in its chapter', () => {
+    const pages = composeBook(
+      {
+        ...BOOK,
+        days: [diary('2026-10-11', 'Rain all day.')],
+        chapters: [{ id: 'c1', title: 'Tokyo', dayDates: ['2026-10-10'] }],
+      },
+      [photo('2026-10-10', '09:00:00')],
+    );
+    expect(pages.find((p) => p.kind === 'chapter')).toMatchObject({ dayCount: 2, photoCount: 1 });
   });
 });
