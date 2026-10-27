@@ -1,5 +1,7 @@
-import { useRef, type CSSProperties, type PointerEvent, type ReactNode } from 'react';
+import { Fragment, useRef, type CSSProperties, type PointerEvent, type ReactNode } from 'react';
 import { leafPages, leafZIndex, visiblePages, type FlipMode } from '../../lib/flip.ts';
+import { CurlLeaf } from './CurlLeaf.tsx';
+import { FLIP_MS } from './useFlipBook.ts';
 
 interface FlipBookProps {
   pageCount: number;
@@ -16,8 +18,10 @@ interface FlipBookProps {
 }
 
 /**
- * The book as a stack of 3D leaves hinged at the spine. Only leaves near the
- * open spread render their content, so long books stay light.
+ * The book as a stack of leaves hinged at the spine. Paper leaves turn by
+ * curling (CurlLeaf); the covers are boards and swing stiffly on their hinge.
+ * Only leaves near the open spread render their content, so long books stay
+ * light.
  */
 export function FlipBook(props: FlipBookProps) {
   const {
@@ -82,27 +86,42 @@ export function FlipBook(props: FlipBookProps) {
         const flight = flights.get(leaf);
         const near = nearAny(leaf) || flight !== undefined;
         const shown = visible.includes(front) || (back !== null && visible.includes(back));
+        // The covers (and the endpapers glued to them) are stiff boards.
+        const hard = front === 0 || front === pageCount - 1 || back === pageCount - 1;
+        const curling = flight !== undefined && !hard;
+        const backFace = back === null ? <div className="page blank" /> : renderPage(back);
         return (
-          <div
-            key={leaf}
-            className={[
-              'leaf',
-              leaf < turned && 'turned',
-              flight !== undefined && 'flying',
-              front === 0 && 'hard',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-            style={{
-              zIndex: leafZIndex(leaf, turned, total, flight ? { direction: flight } : undefined),
-            }}
-            aria-hidden={!shown}
-          >
-            <div className="face front">{near && renderPage(front)}</div>
-            <div className="face back">
-              {near && (back === null ? <div className="page blank" /> : renderPage(back))}
+          <Fragment key={leaf}>
+            <div
+              className={[
+                'leaf',
+                leaf < turned && 'turned',
+                flight !== undefined && 'flying',
+                hard && 'hard',
+                curling && 'curling',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              style={{
+                zIndex: leafZIndex(leaf, turned, total, flight ? { direction: flight } : undefined),
+              }}
+              aria-hidden={!shown}
+            >
+              <div className="face front">{near && !curling && renderPage(front)}</div>
+              <div className="face back">{near && !curling && backFace}</div>
             </div>
-          </div>
+            {curling && (
+              <CurlLeaf
+                direction={flight}
+                mode={mode}
+                duration={FLIP_MS}
+                zIndex={leafZIndex(leaf, turned, total, { direction: flight })}
+                lyingSide={flight === 1 ? 'front' : 'back'}
+                lying={flight === 1 ? renderPage(front) : backFace}
+                other={flight === 1 ? backFace : renderPage(front)}
+              />
+            )}
+          </Fragment>
         );
       })}
     </div>

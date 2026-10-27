@@ -829,3 +829,76 @@
 .reader-empty a {
   color: #f6d9b8;
 }
+
+/* ---------- Paper that curls ----------
+   A paper leaf in mid-turn is drawn by CurlLeaf, flat in 2D: the part still
+   lying down, the flap folded over showing its other side, and the shading of
+   the bend. Its usual 3D leaf hides meanwhile, and paper leaves never
+   rotate, so they land at once when the curl is done. */
+
+.leaf:not(.hard) {
+  transition: none;
+}
+
+.leaf.curling {
+  visibility: hidden;
+}
+
+.curl {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.curl .face {
+  inset: auto;
+  top: 0;
+  height: 100%;
+  transform: none;
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
+}
+
+.curl.double .face {
+  width: 50%;
+}
+
+.curl.single .face {
+  width: 100%;
+}
+
+.curl.double.forward .curl-lying {
+  left: 50%;
+}
+
+.curl.double.back .curl-lying,
+.curl.single .curl-lying {
+  left: 0;
+}
+
+.curl.single.back .curl-lying {
+  left: -100%;
+}
+
+.curl-flap {
+  position: absolute;
+  inset: 0;
+}
+
+.curl .curl-other {
+  left: 0;
+  transform-origin: 0 0;
+}
+
+.curl.double .curl-other {
+  left: 50%;
+}
+
+.curl-shading {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
