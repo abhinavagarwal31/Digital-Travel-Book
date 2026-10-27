@@ -98,10 +98,14 @@ export function BookPage() {
           {ready.length > 0 && (
             <div className="actions">
               <span className="muted">{ready.length} in this book</span>
-              <Link to={`/books/${b.id}/sort`} className={`button${toDecide > 0 ? '' : ' ghost'}`}>
+              <Link
+                to={`/books/${b.id}/sort`}
+                className={`button${toDecide > 0 ? '' : ' ghost'}`}
+                aria-label={toDecide > 0 ? `Sort photos, ${toDecide} need a decision` : undefined}
+              >
                 Sort photos
                 {toDecide > 0 && (
-                  <span className="count" aria-label={`, ${toDecide} need a decision`}>
+                  <span className="count" aria-hidden="true">
                     {toDecide}
                   </span>
                 )}

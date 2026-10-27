@@ -213,7 +213,7 @@ describe('progress', () => {
     board([photo('a', at('09', 35.68)), photo('b', at('10', 35.6801)), photo('c', at('15', 35.0))]);
     await screen.findByText('09:00 – 10:00');
     const labels = [...document.querySelectorAll('.sort-stop-label')].map((l) => l.textContent);
-    expect(labels).toEqual(['09:00 – 10:00', '15:00']);
+    expect(labels).toEqual(['09:00 – 10:00', '']);
   });
 });
 

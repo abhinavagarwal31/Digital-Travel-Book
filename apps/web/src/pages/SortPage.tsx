@@ -79,7 +79,7 @@ function stopGroups(dayPhotos: Photo[]): { key: string; label: string | null; ph
   });
   const rest = dayPhotos.filter((p) => !grouped.has(p.id)).sort(byTime);
   if (rest.length > 0)
-    groups.push({ key: 'rest', label: groups.length > 0 ? 'Elsewhere' : null, photos: rest });
+    groups.push({ key: 'rest', label: groups.length > 0 ? 'Other photos' : null, photos: rest });
   return groups.sort((a, b) => byTime(a.photos[0] as Photo, b.photos[0] as Photo));
 }
 
@@ -378,22 +378,27 @@ export function SortPage() {
                   {dayPhotos.length === 0 ? (
                     <p className="muted sort-day-empty">No photos on this day.</p>
                   ) : (
-                    stopGroups(dayPhotos).map((group) => (
-                      <div key={group.key} className="sort-stop">
-                        {group.label && <span className="sort-stop-label">{group.label}</span>}
-                        <div className="sort-chips">
-                          {group.photos.map((p) =>
-                            chip(
-                              p,
-                              ordered,
-                              statusOf.get(p.id)?.toCheck
-                                ? REASON_LABELS.location_check
-                                : undefined,
-                            ),
-                          )}
+                    <div className="sort-stops">
+                      {stopGroups(dayPhotos).map((group) => (
+                        <div key={group.key} className="sort-stop">
+                          {/* A lone photo already shows its time; the label would repeat it. */}
+                          <span className="sort-stop-label">
+                            {group.photos.length > 1 || group.key === 'rest' ? group.label : null}
+                          </span>
+                          <div className="sort-chips">
+                            {group.photos.map((p) =>
+                              chip(
+                                p,
+                                ordered,
+                                statusOf.get(p.id)?.toCheck
+                                  ? REASON_LABELS.location_check
+                                  : undefined,
+                              ),
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      ))}
+                    </div>
                   )}
                 </section>
               );

@@ -851,14 +851,31 @@ textarea[aria-invalid='true'] {
   font-size: 0.9rem;
 }
 
+.sort-stops {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem 1.1rem;
+}
+
 .sort-stop {
   display: grid;
   gap: 0.4rem;
-  padding-left: 0.75rem;
+  align-content: start;
+  padding-left: 0.65rem;
   border-left: 2px solid var(--line);
 }
 
+.sort-stop .sort-chips {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.sort-stop .sort-chip {
+  width: 96px;
+}
+
 .sort-stop-label {
+  min-height: 1.2em;
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--muted);
@@ -1093,6 +1110,10 @@ textarea[aria-invalid='true'] {
 
   .sort-chips {
     grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  }
+
+  .sort-stop .sort-chip {
+    width: 76px;
   }
 
   .sort-bar {
