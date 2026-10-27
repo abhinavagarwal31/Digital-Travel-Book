@@ -82,6 +82,14 @@ describe('security headers', () => {
     expect(res.headers['x-powered-by']).toBeUndefined();
   });
 
+  it('lets pages load map tiles from Stadia Maps and images from nowhere else', async () => {
+    const res = await request(app).get('/api/health');
+    const imgSrc = (res.headers['content-security-policy'] as string)
+      .split(';')
+      .find((d) => d.startsWith('img-src'));
+    expect(imgSrc).toBe("img-src 'self' data: https://tiles.stadiamaps.com");
+  });
+
   it('trusts exactly one proxy hop for the client IP', async () => {
     const probe = createApp(TEST_CONFIG);
     expect(probe.get('trust proxy')).toBe(1);

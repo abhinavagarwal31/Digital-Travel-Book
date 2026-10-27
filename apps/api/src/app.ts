@@ -36,7 +36,14 @@ export function createApp(config: AppConfig): express.Express {
   // Render terminates TLS in one proxy hop. Without this, req.ip is the proxy's
   // address and per-client rate limits would apply to everyone at once.
   app.set('trust proxy', 1);
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        // Book maps load their tiles straight from Stadia Maps.
+        directives: { imgSrc: ["'self'", 'data:', 'https://tiles.stadiamaps.com'] },
+      },
+    }),
+  );
 
   // Development-only stand-in for Cloudinary's upload endpoint.
   if (config.storage instanceof LocalDiskStorage) config.storage.mount(app);

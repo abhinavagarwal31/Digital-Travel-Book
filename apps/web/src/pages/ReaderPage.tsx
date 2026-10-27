@@ -15,7 +15,14 @@ function contents(pages: BookPage[], startDate: string) {
   return pages.flatMap((page, index) => {
     if (page.kind === 'cover') return [{ label: 'Cover', index }];
     if (page.kind === 'title') return [{ label: 'Title page', index }];
-    if (page.kind === 'day') return [{ label: formatDayHeading(page.dayDate, startDate), index }];
+    if (page.kind === 'trip-map') return [{ label: 'Map of the trip', index }];
+    if (page.kind === 'chapter') {
+      const named = !/^chapter\b/i.test(page.title);
+      return [{ label: named ? `${page.number}. ${page.title}` : page.title, index }];
+    }
+    if (page.kind === 'day') {
+      return [{ label: `\u2003${formatDayHeading(page.dayDate, startDate)}`, index }];
+    }
     if (page.kind === 'closing') return [{ label: 'The end', index }];
     return [];
   });

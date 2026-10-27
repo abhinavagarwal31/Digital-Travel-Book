@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import { formatDateRange, formatTripLength } from '../../lib/dates.ts';
 import { photoImageUrl } from '../../lib/photos.ts';
 import { coverColour } from '../BookCover.tsx';
+import { RouteMapView } from './RouteMapView.tsx';
 
 const longDate = new Intl.DateTimeFormat('en-GB', {
   weekday: 'long',
@@ -80,6 +81,67 @@ export function PageView({ page, index, book, ownerName }: PageViewProps) {
           {number}
         </div>
       );
+
+    case 'trip-map':
+      return (
+        <div className="page trip-map-page">
+          <p className="page-eyebrow">The journey</p>
+          <RouteMapView
+            map={page.map}
+            theme={book.theme.id}
+            width={600}
+            height={560}
+            label={`Map of the trip: ${page.map.pins.length} chapters, in reading order`}
+            caption="Chapters, in reading order"
+          />
+          <ol className="trip-map-legend">
+            {page.chapters.map((c) => (
+              <li key={c.number} value={c.number}>
+                <span>{c.title}</span>
+                <small>{formatDateRange(c.firstDay, c.lastDay)}</small>
+              </li>
+            ))}
+          </ol>
+          {number}
+        </div>
+      );
+
+    case 'chapter': {
+      // Suggested titles already start "Chapter 2 · …"; don't say it twice.
+      const named = !/^chapter\b/i.test(page.title);
+      const places = page.map?.pins.length ?? 0;
+      return (
+        <div className={`page chapter-page${page.map ? '' : ' no-map'}`}>
+          {page.map && (
+            <RouteMapView
+              map={page.map}
+              theme={book.theme.id}
+              width={600}
+              height={560}
+              label={
+                places === 1
+                  ? 'Map of the one place photographed in this chapter'
+                  : `Map of ${places} places photographed in this chapter, in order`
+              }
+              caption={
+                places === 1 ? 'Where the photos were taken' : 'Places photographed, in order'
+              }
+            />
+          )}
+          <div className="chapter-heading">
+            {named && <p className="page-eyebrow">Chapter {page.number}</p>}
+            <h2>{page.title}</h2>
+            <p className="chapter-meta">
+              {/* A suggested title is already the date range. */}
+              {named && `${formatDateRange(page.firstDay, page.lastDay)} · `}
+              {page.dayCount} {page.dayCount === 1 ? 'day' : 'days'} · {page.photoCount}{' '}
+              {page.photoCount === 1 ? 'photo' : 'photos'}
+            </p>
+          </div>
+          {number}
+        </div>
+      );
+    }
 
     case 'day':
       return (

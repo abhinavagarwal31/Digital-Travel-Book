@@ -1,4 +1,5 @@
 export * from './book/compose.ts';
+export * from './book/maps.ts';
 export * from './organize/geo.ts';
 export * from './organize/organize.ts';
 export * from './organize/outliers.ts';
