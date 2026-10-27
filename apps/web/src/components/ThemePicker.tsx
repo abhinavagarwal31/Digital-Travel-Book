@@ -1,4 +1,5 @@
 import { PRESET_THEMES, resolveTheme, type Book, type ThemeId } from '@tb/shared';
+import { useState } from 'react';
 import { useSetTheme } from '../lib/books.ts';
 import { themeStyle } from '../lib/theme.ts';
 
@@ -10,8 +11,9 @@ import { themeStyle } from '../lib/theme.ts';
 export function ThemePicker({ book }: { book: Book }) {
   const setTheme = useSetTheme(book.id);
   const current = resolveTheme(book.theme);
-  // While a choice is saving, show it as chosen.
-  const chosen = setTheme.isPending ? setTheme.variables : current.id;
+  // A choice shows at once, while it saves; if saving fails it goes back.
+  const [picked, setPicked] = useState<ThemeId | null>(null);
+  const chosen = picked ?? current.id;
 
   return (
     <section className="stack" aria-labelledby="style-heading">
@@ -32,7 +34,10 @@ export function ThemePicker({ book }: { book: Book }) {
               value={id}
               checked={chosen === id}
               disabled={setTheme.isPending}
-              onChange={() => setTheme.mutate(id as ThemeId)}
+              onChange={() => {
+                setPicked(id);
+                setTheme.mutate(id, { onSettled: () => setPicked(null) });
+              }}
             />
             <span
               className="theme-preview"
