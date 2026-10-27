@@ -5,28 +5,28 @@ import { Loading, LoadError } from '../components/LoadState.tsx';
 import { usePlaces } from '../lib/account.ts';
 import { useBooks } from '../lib/books.ts';
 
-// The globe brings a world map and d3 with it: loaded only when the library opens.
-const WorldGlobe = lazy(() => import('../components/WorldGlobe.tsx'));
+// The map brings the world's outlines and d3 with it: loaded only when the library opens.
+const WorldMap = lazy(() => import('../components/WorldMap.tsx'));
 
-/** Where the trips have been, on a little globe, with a count. */
+/** Where the trips have been, as the centrepiece of the library. */
 function YourWorld() {
   const places = usePlaces();
   const trips = places.data ?? [];
   const count = trips.reduce((n, t) => n + t.points.length, 0);
   return (
-    <aside className="your-world" aria-labelledby="world-heading">
-      <Suspense fallback={<div className="world-globe placeholder" aria-hidden="true" />}>
-        <WorldGlobe trips={trips} size={260} />
-      </Suspense>
+    <section className="your-world" aria-labelledby="world-heading">
       <div className="your-world-text">
         <h2 id="world-heading">Your world</h2>
         <p className="muted">
           {count === 0
-            ? 'Places from your photos will light up here.'
-            : `${count} ${count === 1 ? 'place' : 'places'} across ${trips.length} ${trips.length === 1 ? 'trip' : 'trips'}. Drag to spin.`}
+            ? 'Places from your photos will appear here as pins.'
+            : `${count} ${count === 1 ? 'place' : 'places'} across ${trips.length} ${trips.length === 1 ? 'trip' : 'trips'}`}
         </p>
       </div>
-    </aside>
+      <Suspense fallback={<div className="world-map placeholder" aria-hidden="true" />}>
+        <WorldMap trips={trips} />
+      </Suspense>
+    </section>
   );
 }
 
@@ -35,17 +35,18 @@ export function LibraryPage() {
 
   return (
     <section className="stack" style={{ gap: '2rem' }}>
-      <div className="library-hero">
-        <div className="stack" style={{ gap: '0.9rem' }}>
+      <YourWorld />
+
+      <div className="page-title">
+        <div>
           <p className="eyebrow">Your library</p>
           <h1>My travel books</h1>
-          {books.data && books.data.length > 0 && (
-            <Link to="/books/new" className="button" style={{ justifySelf: 'start' }}>
-              New book
-            </Link>
-          )}
         </div>
-        <YourWorld />
+        {books.data && books.data.length > 0 && (
+          <Link to="/books/new" className="button">
+            New book
+          </Link>
+        )}
       </div>
 
       {books.isPending && <Loading label="Loading your books…" />}

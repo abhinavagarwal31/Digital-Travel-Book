@@ -2317,57 +2317,137 @@ textarea[aria-invalid='true'] {
   filter: grayscale(0.2);
 }
 
-/* ---------- Your world: the globe on the library page ---------- */
-
-.library-hero {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-@media (max-width: 720px) {
-  .library-hero {
-    grid-template-columns: 1fr;
-  }
-}
+/* ---------- Your world: the atlas map on the library page ---------- */
 
 .your-world {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  padding: 0.75rem 1.5rem 0.75rem 0.75rem;
+  position: relative;
+  padding: clamp(0.75rem, 2vw, 1.5rem) clamp(0.5rem, 2vw, 1.5rem) 0.5rem;
   border-radius: var(--radius-lg);
   background:
-    radial-gradient(60% 80% at 25% 50%, rgb(70 130 200 / 0.18), transparent 70%), var(--surface);
+    radial-gradient(70% 90% at 50% 40%, rgb(120 190 240 / 0.16), transparent 70%), var(--surface);
   border: 1px solid var(--line);
   box-shadow: var(--shadow-sm);
 }
 
 .your-world-text {
-  max-width: 13rem;
+  position: absolute;
+  top: clamp(0.9rem, 2vw, 1.6rem);
+  left: clamp(1rem, 2.5vw, 2rem);
+  z-index: 1;
   display: grid;
-  gap: 0.35rem;
+  gap: 0.15rem;
 }
 
 .your-world-text h2 {
-  font-size: 1.25rem;
+  font-size: clamp(1.1rem, 0.9rem + 0.8vw, 1.5rem);
 }
 
-.world-globe {
+.world-map {
   display: block;
-  cursor: grab;
-  touch-action: none;
+  width: 100%;
+  height: auto;
+  margin-top: clamp(1.5rem, 4vw, 2.5rem);
 }
 
-.world-globe:active {
-  cursor: grabbing;
-}
-
-.world-globe.placeholder {
-  width: 260px;
-  height: 260px;
+.world-map.placeholder {
+  aspect-ratio: 960 / 524;
   border-radius: 50%;
-  background: radial-gradient(circle at 40% 35%, #2f6ea3, #0c2340 70%);
-  transform: scale(0.76);
+  background: radial-gradient(circle at 45% 40%, #bfeaff, #3d9bd6 75%);
+  opacity: 0.6;
+}
+
+.wm-country {
+  stroke: rgb(70 50 30 / 0.55);
+  stroke-width: 0.5;
+  stroke-linejoin: round;
+  transition: filter 150ms;
+}
+
+.wm-country:hover {
+  filter: brightness(1.08) saturate(1.2);
+}
+
+/* Countries you have been to: inked boldly, a touch richer. */
+.wm-country.visited {
+  stroke: #2b1d10;
+  stroke-width: 1.6;
+  filter: saturate(1.35) brightness(1.02);
+}
+
+.wm-ocean {
+  font: italic 600 11px var(--font-display);
+  fill: #1d5a86;
+  fill-opacity: 0.75;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.wm-country-name {
+  font: 700 11px var(--font-ui);
+  fill: #2b1d10;
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: #ffffff;
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+/* Routes: a white casing under a bold line, drawn in when the page opens. */
+.wm-route {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: wm-draw 1.2s ease-out forwards;
+}
+
+.wm-route.casing {
+  stroke: #ffffff;
+  stroke-width: 5;
+}
+
+.wm-route.between {
+  stroke: #ffffff;
+  stroke-opacity: 0.85;
+  stroke-width: 1.8;
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.25));
+  animation-delay: 0.1s;
+}
+
+.wm-pin {
+  filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.35));
+  animation: wm-drop 500ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+.wm-pin path {
+  stroke: #ffffff;
+  stroke-width: 1.5;
+}
+
+@keyframes wm-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes wm-drop {
+  from {
+    opacity: 0;
+    translate: 0 -14px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wm-route,
+  .wm-pin {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
 }

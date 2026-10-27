@@ -13,7 +13,7 @@ export function useAccount({ enabled = true } = {}) {
   });
 }
 
-/** Every place the trips have reached, per book, for the world globe. */
+/** Every place the trips have reached, per book, for the world map. */
 export function usePlaces() {
   return useQuery({
     queryKey: ['places'],
