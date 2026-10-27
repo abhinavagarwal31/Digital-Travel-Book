@@ -477,7 +477,7 @@ export function writeTestPhotos(root: string) {
 
 function guide(files: string[]): string {
   const rows = TRIP_PHOTOS.map((p, i) => `| \`${files[i]}\` | ${p.expect} |`).join('\n');
-  return `# Testing the Digital Travel Book by hand
+  return `# Testing the Wanderbook by hand
 
 Every photo here is generated, and shows on its face what it is testing.
 Go through the steps in order; each says what you should see.

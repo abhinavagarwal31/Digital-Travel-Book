@@ -1,4 +1,4 @@
-# Digital Travel Book
+# Wanderbook
 
 Turn a trip's photos into a private, organized, themed travel book. Photos are sorted into days and chapters from their own metadata; nothing (dates, places, memories) is ever invented.
 

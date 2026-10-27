@@ -26,7 +26,7 @@ export function Layout() {
       <header className="app-header">
         <Link to="/" className="brand">
           <BrandMark />
-          Digital Travel Book
+          Wanderbook
         </Link>
         {me.data ? (
           <div className="account">
