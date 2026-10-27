@@ -1,5 +1,6 @@
 import { THEME_IDS, type ThemeId } from '../schemas/book.ts';
 import { atlasV1 } from './atlas.v1.ts';
+import { comicV1 } from './comic.v1.ts';
 import { themeDefinitionSchema, type ThemeDefinition } from './definition.ts';
 import { editorialV1 } from './editorial.v1.ts';
 import { scrapbookV1 } from './scrapbook.v1.ts';
@@ -14,6 +15,7 @@ const PRESETS: Record<ThemeId, readonly ThemeDefinition[]> = {
   atlas: [atlasV1],
   editorial: [editorialV1],
   scrapbook: [scrapbookV1],
+  comic: [comicV1],
 };
 for (const versions of Object.values(PRESETS)) {
   for (const definition of versions) themeDefinitionSchema.parse(definition);

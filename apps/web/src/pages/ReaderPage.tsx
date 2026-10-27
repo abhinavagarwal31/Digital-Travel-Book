@@ -130,6 +130,7 @@ export function ReaderPage() {
           } as CSSProperties
         }
         data-frame={theme.definition.photos.frame}
+        data-look={theme.definition.look ?? 'classic'}
       >
         <FlipBook
           pageCount={pages.length}

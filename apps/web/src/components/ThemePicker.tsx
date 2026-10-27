@@ -43,6 +43,7 @@ export function ThemePicker({ book }: { book: Book }) {
               className="theme-preview"
               style={themeStyle(t)}
               data-frame={t.photos.frame}
+              data-look={t.look ?? 'classic'}
               aria-hidden="true"
             >
               <span className="theme-preview-eyebrow">Day 3</span>

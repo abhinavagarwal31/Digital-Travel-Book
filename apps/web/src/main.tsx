@@ -5,6 +5,8 @@ import { BrowserRouter } from 'react-router';
 import { App } from './App.tsx';
 import { ApiRequestError } from './lib/api.ts';
 import '@fontsource/bangers';
+import '@fontsource/comic-neue/400.css';
+import '@fontsource/comic-neue/700.css';
 import '@fontsource-variable/caveat';
 import '@fontsource-variable/fraunces';
 import '@fontsource-variable/inter';

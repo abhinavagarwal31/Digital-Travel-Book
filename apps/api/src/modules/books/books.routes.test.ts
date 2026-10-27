@@ -35,7 +35,7 @@ describe('creating and reading books', () => {
       id: expect.any(String),
       ...JAPAN,
       description: '',
-      theme: { kind: 'preset', id: 'editorial', version: 1 },
+      theme: { kind: 'preset', id: 'comic', version: 1 },
       days: [],
       chapters: [],
       chaptersEdited: false,
@@ -144,8 +144,8 @@ describe('choosing a theme', () => {
     await BookModel.updateOne({ _id: id }, { $set: { 'theme.version': 7 } });
     expect(
       (await asha.patch(`/api/books/${id}`).send({ title: 'Edited' })).body.book.theme,
-    ).toEqual({ kind: 'preset', id: 'editorial', version: 7 });
-    const res = await asha.put(`/api/books/${id}/theme`).send({ id: 'editorial' });
+    ).toEqual({ kind: 'preset', id: 'comic', version: 7 });
+    const res = await asha.put(`/api/books/${id}/theme`).send({ id: 'comic' });
     expect(res.body.book.theme.version).toBe(1);
   });
 
@@ -162,7 +162,7 @@ describe('choosing a theme', () => {
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_FAILED');
     }
-    expect((await BookModel.findById(id))?.theme.id).toBe('editorial');
+    expect((await BookModel.findById(id))?.theme.id).toBe('comic');
   });
 });
 
@@ -216,7 +216,7 @@ describe('ownership: another user gets 404 and changes nothing', () => {
     const res = await ben.put(`/api/books/${bookId}/theme`).send({ id: 'atlas' });
     expect(res.status).toBe(404);
     expect(res.body).toEqual(NOT_FOUND);
-    expect((await BookModel.findById(bookId))?.theme.id).toBe('editorial');
+    expect((await BookModel.findById(bookId))?.theme.id).toBe('comic');
   });
 
   it('cannot delete it', async () => {

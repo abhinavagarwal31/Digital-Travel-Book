@@ -23,7 +23,7 @@ function bookPage(book: object = JAPAN_BOOK) {
   return calls;
 }
 
-it('offers the three styles with the current one chosen, and saves a new choice', async () => {
+it('offers every style with the current one chosen, and saves a new choice', async () => {
   const calls = bookPage();
   const group = await screen.findByRole('group', { name: 'Book style' });
   const radios = within(group).getAllByRole('radio');
@@ -31,6 +31,7 @@ it('offers the three styles with the current one chosen, and saves a new choice'
     'atlas',
     'editorial',
     'scrapbook',
+    'comic',
   ]);
   expect(within(group).getByRole('radio', { name: /Minimal Editorial/ })).toHaveProperty(
     'checked',

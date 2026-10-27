@@ -44,7 +44,7 @@ const bookSchema = new mongoose.Schema<BookFields>(
     theme: {
       _id: false,
       kind: { type: String, enum: ['preset'], default: 'preset' },
-      id: { type: String, enum: THEME_IDS, default: 'editorial' },
+      id: { type: String, enum: THEME_IDS, default: 'comic' },
       version: { type: Number, default: 1 },
     },
     days: {

@@ -7,6 +7,8 @@ export const FONT_STACKS: Record<ThemeFont, string> = {
   playfair: "'Playfair Display Variable', Georgia, serif",
   inter: "'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif",
   caveat: "'Caveat Variable', 'Bradley Hand', cursive",
+  bangers: "'Bangers', Impact, 'Arial Black', sans-serif",
+  'comic-neue': "'Comic Neue', 'Comic Sans MS', 'Chalkboard SE', sans-serif",
 };
 
 /**

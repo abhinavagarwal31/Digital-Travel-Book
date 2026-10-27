@@ -5,7 +5,7 @@ import { isoDateSchema, objectIdSchema, timeZoneSchema } from './common.ts';
 /** Longest trip a book may span; bounds the number of days the app ever derives. */
 export const MAX_TRIP_DAYS = 366;
 
-export const THEME_IDS = ['atlas', 'editorial', 'scrapbook'] as const;
+export const THEME_IDS = ['atlas', 'editorial', 'scrapbook', 'comic'] as const;
 export type ThemeId = (typeof THEME_IDS)[number];
 
 /** Whole days from start to end inclusive, for valid YYYY-MM-DD strings. */

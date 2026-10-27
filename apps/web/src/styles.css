@@ -1967,3 +1967,19 @@ textarea[aria-invalid='true'] {
 .cover.comic::after {
   display: none;
 }
+
+.theme-preview[data-frame='panel'] .theme-preview-photo {
+  border: 1.2cqw solid #16120e;
+  border-radius: 0;
+  box-shadow: 1.6cqw 1.6cqw 0 #16120e;
+}
+
+.theme-preview[data-look='comic'] .theme-preview-title {
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.theme-preview[data-look='comic'] .theme-preview-caption {
+  font-style: normal;
+  font-weight: 700;
+}

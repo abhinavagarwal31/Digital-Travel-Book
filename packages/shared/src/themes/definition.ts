@@ -7,14 +7,27 @@ import { z } from 'zod';
  */
 
 /** Self-hosted fonts the reader can load; a theme picks from these only. */
-export const THEME_FONTS = ['fraunces', 'playfair', 'inter', 'caveat'] as const;
+export const THEME_FONTS = [
+  'fraunces',
+  'playfair',
+  'inter',
+  'caveat',
+  'bangers',
+  'comic-neue',
+] as const;
 export const MAP_TILE_STYLES = [
   'stamen_watercolor',
   'stamen_toner_lite',
   'alidade_smooth',
 ] as const;
-/** How photos sit on the page: bare, mounted with a border, or as polaroids. */
-export const PHOTO_FRAMES = ['plain', 'mounted', 'polaroid'] as const;
+/** How photos sit on the page: bare, mounted with a border, as polaroids, or as inked comic panels. */
+export const PHOTO_FRAMES = ['plain', 'mounted', 'polaroid', 'panel'] as const;
+/**
+ * The book's whole make: a classic bound book, or a comic (newsprint, inked
+ * panels, lettered captions, a soft binding). Absent means classic, so themes
+ * released before this existed render exactly as they did.
+ */
+export const PAGE_LOOKS = ['classic', 'comic'] as const;
 /** Photo page layouts, named by how many photos they hold. */
 export const PHOTO_LAYOUTS = ['hero-1', 'split-2', 'mosaic-3', 'grid-4'] as const;
 
@@ -22,6 +35,7 @@ export type ThemeFont = (typeof THEME_FONTS)[number];
 export type MapTileStyle = (typeof MAP_TILE_STYLES)[number];
 export type PhotoFrame = (typeof PHOTO_FRAMES)[number];
 export type PhotoLayout = (typeof PHOTO_LAYOUTS)[number];
+export type PageLook = (typeof PAGE_LOOKS)[number];
 
 /** Photos on a page in each layout. */
 export const LAYOUT_CAPACITY: Record<PhotoLayout, number> = {
@@ -38,6 +52,7 @@ export const themeDefinitionSchema = z
     /** The shape of this object; bumped only with an upgrade function for older ones. */
     format: z.literal(1),
     name: z.string().trim().min(1).max(40),
+    look: z.enum(PAGE_LOOKS).optional(),
     description: z.string().trim().max(160),
     fonts: z.strictObject({
       display: z.enum(THEME_FONTS),

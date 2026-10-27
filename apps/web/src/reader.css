@@ -748,12 +748,12 @@
 }
 
 /* Plain: full-bleed, square corners, like a magazine. */
-[data-frame='plain'] .page img {
+[data-frame='plain'] .page:not(.cover-page) img {
   border-radius: 0;
 }
 
 /* Mounted: a thin cream border and a soft shadow, as if glued into an album. */
-[data-frame='mounted'] .page img {
+[data-frame='mounted'] .page:not(.cover-page) img {
   padding: 0.9cqw;
   background: #fffaf0;
   border-radius: 0.4cqw;
@@ -763,7 +763,7 @@
 }
 
 /* Polaroid: a white card with a deep bottom edge, set a little askew. */
-[data-frame='polaroid'] .page img {
+[data-frame='polaroid'] .page:not(.cover-page) img {
   padding: 1.6cqw 1.6cqw 5cqw;
   background: #fffdf8;
   border-radius: 0.3cqw;
@@ -955,4 +955,282 @@
 
 .flipbook.dragging {
   cursor: grabbing;
+}
+
+/* ---------- The comic look ----------
+   A comic is a soft, stapled book of newsprint: no hard case, inked panels
+   with hard shadows, narration boxes and speech bubbles, bold lettering. All
+   of it applies only when the theme's look is 'comic'. */
+
+.reader-stage[data-look='comic'] {
+  --comic-ink: var(--paper-ink);
+  --comic-yellow: #ffe066;
+  --comic-dots: radial-gradient(circle, rgb(230 57 70 / 0.16) 0.26cqw, transparent 0.34cqw) 0 0 /
+    1.7cqw 1.7cqw;
+}
+
+.reader-stage[data-look='comic'] .book-case {
+  display: none;
+}
+
+/* Newsprint: a few halftone dots drifting in from one corner of each page. */
+.reader-stage[data-look='comic'] .face {
+  background:
+    radial-gradient(60% 50% at 100% 100%, transparent 0, var(--paper-page) 100%), var(--comic-dots),
+    var(--paper-page);
+}
+
+/* A soft binding only dips a little at the spine. */
+.reader-stage[data-look='comic'] .face.front::after {
+  background:
+    linear-gradient(90deg, rgb(40 30 20 / 0.24) 0, rgb(40 30 20 / 0.06) 3%, transparent 9%),
+    var(--grain);
+  opacity: 0.8;
+}
+
+.reader-stage[data-look='comic'] .face.back::after {
+  background:
+    linear-gradient(270deg, rgb(40 30 20 / 0.24) 0, rgb(40 30 20 / 0.06) 3%, transparent 9%),
+    var(--grain);
+  opacity: 0.8;
+}
+
+.reader-stage[data-look='comic'] .face > .page::before {
+  display: none;
+}
+
+.reader-stage[data-look='comic'] .page {
+  font-family: var(--font-body);
+}
+
+.reader-stage[data-look='comic'] .page h1,
+.reader-stage[data-look='comic'] .page h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 0.98;
+}
+
+/* Lettered like the cover: yellow, inked outline, hard shadow. */
+.reader-stage[data-look='comic'] .title-page h1,
+.reader-stage[data-look='comic'] .chapter-heading h2,
+.reader-stage[data-look='comic'] .closing-page h2 {
+  color: var(--comic-yellow);
+  -webkit-text-stroke: 0.9cqw var(--comic-ink);
+  paint-order: stroke fill;
+  text-shadow: 0.9cqw 1cqw 0 var(--comic-ink);
+  rotate: -2deg;
+}
+
+.reader-stage[data-look='comic'] .day-page h2,
+.reader-stage[data-look='comic'] .diary-page h2 {
+  font-size: 8cqw;
+  color: var(--comic-ink);
+}
+
+/* Narration boxes: the little yellow labels above a panel. */
+.reader-stage[data-look='comic'] .page-eyebrow {
+  align-self: flex-start;
+  width: max-content;
+  padding: 0.9cqw 2cqw 0.5cqw;
+  background: var(--comic-yellow);
+  border: 0.5cqw solid var(--comic-ink);
+  box-shadow: 0.7cqw 0.7cqw 0 var(--comic-ink);
+  color: var(--comic-ink);
+  font: 400 3.4cqw var(--font-display);
+  letter-spacing: 0.08em;
+  rotate: -2deg;
+  margin-bottom: 3cqw;
+}
+
+.reader-stage[data-look='comic'] .title-page .page-eyebrow,
+.reader-stage[data-look='comic'] .chapter-page.no-map .page-eyebrow {
+  align-self: center;
+}
+
+/* "Chapter 1!": a red burst of a label. */
+.reader-stage[data-look='comic'] .chapter-heading .page-eyebrow {
+  background: var(--paper-accent);
+  color: #fffdf6;
+  font-size: 4.2cqw;
+  rotate: -4deg;
+}
+
+.reader-stage[data-look='comic'] .chapter-heading .page-eyebrow::after {
+  content: '!';
+}
+
+.reader-stage[data-look='comic'] .chapter-heading h2 {
+  font-size: 9cqw;
+}
+
+/* Photos as inked panels, printed a little punchier. */
+[data-frame='panel'] .page:not(.cover-page) img {
+  border: 0.7cqw solid var(--paper-ink);
+  border-radius: 0;
+  box-shadow: 0.9cqw 0.9cqw 0 var(--paper-ink);
+  filter: saturate(1.25) contrast(1.06);
+}
+
+[data-frame='panel'] .photo-layout {
+  gap: 3cqw;
+}
+
+/* Captions: narration boxes overlapping the panel's top corner. */
+[data-frame='panel'] .page-photo {
+  position: relative;
+}
+
+.reader-stage[data-look='comic'] .page-photo figcaption {
+  position: absolute;
+  top: -1.2cqw;
+  left: -1.2cqw;
+  z-index: 2;
+  max-width: 82%;
+  padding: 0.7cqw 1.4cqw;
+  background: var(--comic-yellow);
+  border: 0.45cqw solid var(--comic-ink);
+  box-shadow: 0.6cqw 0.6cqw 0 var(--comic-ink);
+  color: var(--comic-ink);
+  font: 700 2.4cqw var(--font-caption);
+  font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* The opening photo's caption: a speech bubble, its tail pointing at the picture. */
+.reader-stage[data-look='comic'] .day-caption {
+  position: relative;
+  z-index: 2;
+  align-self: flex-end;
+  max-width: 78%;
+  margin-top: -5cqw;
+  margin-right: 2cqw;
+  padding: 1.6cqw 3cqw;
+  background: #fffdf6;
+  border: 0.5cqw solid var(--comic-ink);
+  border-radius: 4cqw;
+  box-shadow: 0.7cqw 0.7cqw 0 var(--comic-ink);
+  color: var(--comic-ink);
+  font: 700 2.9cqw var(--font-caption);
+  font-style: normal;
+  overflow: visible;
+}
+
+.reader-stage[data-look='comic'] .day-caption::before {
+  content: '';
+  position: absolute;
+  top: -3.2cqw;
+  left: 18%;
+  width: 4cqw;
+  height: 3.6cqw;
+  background: var(--comic-ink);
+  clip-path: polygon(0 100%, 100% 100%, 20% 0);
+}
+
+.reader-stage[data-look='comic'] .day-caption::after {
+  content: '';
+  position: absolute;
+  top: -2.2cqw;
+  left: calc(18% + 0.7cqw);
+  width: 2.8cqw;
+  height: 2.6cqw;
+  background: #fffdf6;
+  clip-path: polygon(0 100%, 100% 100%, 20% 0);
+}
+
+.reader-stage[data-look='comic'] .day-meta,
+.reader-stage[data-look='comic'] .chapter-meta,
+.reader-stage[data-look='comic'] .title-dates,
+.reader-stage[data-look='comic'] .closing-page p {
+  font: 700 2.8cqw var(--font-body);
+  color: var(--paper-muted);
+}
+
+/* The diary: lettered by hand, with a bold comic initial. */
+.reader-stage[data-look='comic'] .diary-text {
+  font-size: 3.2cqw;
+  line-height: 1.5;
+}
+
+.reader-stage[data-look='comic']
+  .diary-page:not(.continued)
+  .diary-text
+  p:first-child::first-letter {
+  font-family: var(--font-display);
+  font-size: 4.4em;
+  line-height: 0.76;
+  color: var(--paper-accent);
+  -webkit-text-stroke: 0.35cqw var(--comic-ink);
+  paint-order: stroke fill;
+  text-shadow: 0.4cqw 0.4cqw 0 var(--comic-ink);
+  padding: 0.08em 0.12em 0 0;
+}
+
+/* Maps are panels too. */
+.reader-stage[data-look='comic'] .route-map svg {
+  border-radius: 0;
+  box-shadow:
+    0 0 0 0.7cqw var(--comic-ink),
+    1.2cqw 1.2cqw 0 0.7cqw var(--comic-ink);
+}
+
+.reader-stage[data-look='comic'] .route-map figcaption {
+  font: 700 2.3cqw var(--font-caption);
+  margin-top: 1.6cqw;
+}
+
+.reader-stage[data-look='comic'] .trip-map-legend {
+  font: 700 3cqw var(--font-body);
+}
+
+/* The endpaper: a sheet of halftone, the owner's name in a speech bubble. */
+.reader-stage[data-look='comic'] .endpaper {
+  background:
+    radial-gradient(circle, rgb(230 57 70 / 0.35) 0.5cqw, transparent 0.62cqw) 0 0 / 3cqw 3cqw,
+    var(--comic-yellow);
+}
+
+.reader-stage[data-look='comic'] .endpaper p {
+  font: 700 4cqw var(--font-body);
+  background: #fffdf6;
+  border: 0.6cqw solid var(--comic-ink);
+  border-radius: 6cqw;
+  box-shadow: 0.9cqw 0.9cqw 0 var(--comic-ink);
+  padding: 4cqw 7cqw;
+}
+
+.reader-stage[data-look='comic'] .endpaper strong {
+  font: 400 7cqw var(--font-display);
+  letter-spacing: 0.04em;
+}
+
+.reader-stage[data-look='comic'] .closing-mark {
+  display: none;
+}
+
+.reader-stage[data-look='comic'] .page-number {
+  font: 400 3.2cqw var(--font-display);
+  color: var(--comic-ink);
+  letter-spacing: 0.06em;
+}
+
+/* The diary sits in a big narration panel, drawn around (never over) the text,
+   so the lettering keeps exactly the room DIARY_BUDGET allows. */
+.reader-stage[data-look='comic'] .diary-page::after {
+  content: '';
+  position: absolute;
+  inset: 5cqw 5cqw 9.2cqw;
+  border: 0.6cqw solid var(--comic-ink);
+  box-shadow: 1cqw 1cqw 0 var(--comic-ink);
+  background: rgb(255 224 102 / 0.16);
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+.reader-stage[data-look='comic'] .diary-page .page-eyebrow {
+  position: relative;
+  z-index: 1;
+  margin-top: -1cqw;
 }
