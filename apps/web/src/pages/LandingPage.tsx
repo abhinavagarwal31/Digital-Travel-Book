@@ -1,81 +1,159 @@
+import { coverDesignOf, PLANS, PRESET_THEMES, type ThemeId, type TripPath } from '@tb/shared';
+import { lazy, Suspense, type CSSProperties } from 'react';
 import { Link } from 'react-router';
-import { BookCover } from '../components/BookCover.tsx';
+import { CoverArt } from '../components/BookCover.tsx';
 
-const SAMPLE_BOOK = {
+const WorldMap = lazy(() => import('../components/WorldMap.tsx'));
+
+/** A sample trip, drawn the same way a real one is. */
+const SAMPLE = {
   id: 'sample-kyoto',
   title: 'Whispers of Japan',
-  startDate: '2026-10-10',
-  endDate: '2026-10-15',
-  destinations: ['Tokyo', 'Kyoto', 'Osaka'],
-  theme: { kind: 'preset' as const, id: 'traveller' as const, version: 1 },
+  dates: '10 – 15 Oct 2026',
+  places: ['Tokyo', 'Kyoto', 'Osaka'],
 };
 
-function RouteArt() {
-  return (
-    <svg className="route" viewBox="0 0 400 360" aria-hidden="true" fill="none">
-      <path
-        d="M24 318 C 10 230, 30 150, 52 96 S 150 14, 230 22 S 372 40, 380 120 S 392 260, 360 330"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeDasharray="2 10"
-        strokeLinecap="round"
-      />
-      {[
-        [24, 318],
-        [52, 96],
-        [230, 22],
-        [380, 120],
-        [360, 330],
-      ].map(([x, y], i) => (
-        <g key={i}>
-          <circle
-            cx={x}
-            cy={y}
-            r="9"
-            fill="var(--surface)"
-            stroke="currentColor"
-            strokeWidth="2.5"
-          />
-          <text x={x} y={(y as number) + 4} textAnchor="middle" fontSize="10" fill="currentColor">
-            {i + 1}
-          </text>
-        </g>
-      ))}
-    </svg>
-  );
-}
-
-const FEATURES = [
+const SAMPLE_TRIPS: TripPath[] = [
   {
-    title: 'Sorted for you',
-    body: 'Photos fall into days and places from their own timestamps and locations. Anything uncertain waits for you, never a guess.',
-    icon: 'M4 7h16M4 12h10M4 17h6',
+    bookId: 'kerala',
+    title: 'Monsoon in Kerala',
+    startDate: '2026-07-02',
+    points: [
+      { lat: 9.93, lng: 76.27 },
+      { lat: 10.09, lng: 77.06 },
+      { lat: 9.49, lng: 76.33 },
+    ],
   },
   {
-    title: 'Your words, not AI’s',
-    body: 'Captions and daily diary entries are yours alone. Nothing about your trip is ever made up.',
-    icon: 'M5 19l3-1 9-9-2-2-9 9-1 3zM14 6l2 2',
+    bookId: 'swiss',
+    title: 'Swiss Alps by Train',
+    startDate: '2026-05-14',
+    points: [
+      { lat: 47.37, lng: 8.54 },
+      { lat: 47.05, lng: 8.31 },
+      { lat: 46.02, lng: 7.75 },
+    ],
   },
   {
-    title: 'A book that turns',
-    body: 'Chapter maps of the places you photographed, three hand-made themes, and real pages that flip.',
-    icon: 'M4 6c3-1.3 5.5-1.3 8 0v12c-2.5-1.3-5-1.3-8 0zM12 6c2.5-1.3 5-1.3 8 0v12c-3-1.3-5.5-1.3-8 0z',
+    bookId: 'japan',
+    title: 'Whispers of Japan',
+    startDate: '2026-10-10',
+    points: [
+      { lat: 35.68, lng: 139.69 },
+      { lat: 35.01, lng: 135.77 },
+      { lat: 34.69, lng: 135.5 },
+    ],
+  },
+  {
+    bookId: 'rajasthan',
+    title: 'Rajasthan Road Trip',
+    startDate: '2026-11-14',
+    points: [
+      { lat: 26.91, lng: 75.79 },
+      { lat: 26.24, lng: 73.02 },
+      { lat: 26.92, lng: 70.91 },
+    ],
   },
 ];
 
-/** What a visitor sees before logging in. */
+/** A sample book's cover in one of the styles, exactly as the app draws it. */
+function SampleCover({ themeId, className }: { themeId: ThemeId; className?: string }) {
+  const theme = PRESET_THEMES.find((t) => t.id === themeId)!.definition;
+  const design = coverDesignOf(theme);
+  return (
+    <div
+      className={`cover ${design === 'comic' ? 'comic' : 'designed'} ${className ?? ''}`}
+      style={
+        {
+          '--cover': theme.colors.cover ?? '#1f4e5a',
+          '--cover-ink': theme.colors.coverInk,
+        } as CSSProperties
+      }
+    >
+      <CoverArt
+        design={design}
+        bookId={SAMPLE.id}
+        title={SAMPLE.title}
+        dates={SAMPLE.dates}
+        places={SAMPLE.places}
+        animate="always"
+        headingLevel={null}
+      />
+    </div>
+  );
+}
+
+const STEPS = [
+  {
+    title: 'Upload the trip',
+    body: 'Drop in JPEG, PNG, WebP or HEIC photos straight from your phone. Uploads retry by themselves on a shaky connection.',
+  },
+  {
+    title: 'It sorts itself',
+    body: 'Each photo’s own time and GPS place it in a day and a chapter. Anything uncertain waits for you on a drag-and-drop board: nothing is guessed.',
+  },
+  {
+    title: 'Write it, then read it',
+    body: 'Add captions and a diary for each day, pick a style, and page through a real book with maps of everywhere you went.',
+  },
+];
+
+const FEATURES = [
+  {
+    title: 'Organised by the photos themselves',
+    body: 'Capture time, time zone and location are read from each photo on the server, so days line up even across time zones.',
+    icon: 'M4 7h16M4 12h10M4 17h6',
+  },
+  {
+    title: 'Chapters and maps',
+    body: 'Days group into chapters by place. Every chapter opens with a map of its stops, and the book opens with your whole route.',
+    icon: 'M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14',
+  },
+  {
+    title: 'A book that really turns',
+    body: 'Pages curl as you drag a corner, covers swing open, and focus mode dims everything but the book.',
+    icon: 'M4 6c3-1.3 5.5-1.3 8 0v12c-2.5-1.3-5-1.3-8 0zM12 6c2.5-1.3 5-1.3 8 0v12c-3-1.3-5.5-1.3-8 0z',
+  },
+  {
+    title: 'Ten traveller’s styles',
+    body: 'A leather journal, a passport, an airmail envelope, a luggage tag, a comic and more, each with pages to match.',
+    icon: 'M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6-4.5-4.2 6.1-.7z',
+  },
+  {
+    title: 'Your words, never invented',
+    body: 'Captions and diaries are yours alone. Dates, places and memories are never made up to fill a page.',
+    icon: 'M5 19l3-1 9-9-2-2-9 9-1 3zM14 6l2 2',
+  },
+  {
+    title: 'Private by default',
+    body: 'Photos are only ever shown to you. Passwords are stored as salted scrypt hashes and sessions live in HTTP-only cookies.',
+    icon: 'M12 3 5 6v5c0 4.4 3 8.3 7 10 4-1.7 7-5.6 7-10V6zM9 12l2 2 4-4',
+  },
+];
+
+const SHOWCASE: { id: ThemeId; label: string }[] = [
+  { id: 'traveller', label: 'Traveller’s Journal' },
+  { id: 'midnight', label: 'Midnight passport' },
+  { id: 'postcard', label: 'Vintage Postcard' },
+  { id: 'scrapbook', label: 'Scrapbook' },
+  { id: 'atlas', label: 'Illustrated Atlas' },
+  { id: 'comic', label: 'Comic Adventure' },
+];
+
+/** What a visitor sees before signing up: what Wanderbook is, how it works, and why. */
 export function LandingPage() {
   return (
-    <div className="stack" style={{ gap: '3rem' }}>
+    <div className="landing">
       <section className="hero">
         <div>
-          <p className="eyebrow">Your trips, bound beautifully</p>
+          <p className="eyebrow">Wanderbook · your trips, bound beautifully</p>
           <h1>
             Turn a camera roll into a <em>book</em> you’ll want to reopen.
           </h1>
           <p className="lede">
-            Upload your travel photos. They sort themselves into days and chapters, you add the
-            stories, and the trip becomes a book you can page through.
+            Upload your travel photos. They sort themselves into days and chapters from their own
+            time and place, you add the stories, and the trip becomes a book with real turning
+            pages.
           </p>
           <div className="actions">
             <Link to="/register" className="button large">
@@ -85,34 +163,96 @@ export function LandingPage() {
               Log in
             </Link>
           </div>
+          <p className="hero-note muted">
+            Free to start: up to {PLANS.free.photosPerBook} photos in every book.
+          </p>
         </div>
-        <div className="hero-art">
-          <RouteArt />
-          <div style={{ width: 'min(260px, 70%)' }}>
-            <BookCover book={SAMPLE_BOOK} />
-          </div>
+        <div className="hero-covers" aria-hidden="true">
+          <SampleCover themeId="postcard" className="fan left" />
+          <SampleCover themeId="comic" className="fan right" />
+          <SampleCover themeId="traveller" className="fan front" />
         </div>
       </section>
 
-      <section className="features" aria-label="What it does">
-        {FEATURES.map((feature) => (
-          <article key={feature.title} className="card feature">
-            <span className="feature-icon" aria-hidden="true">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <path
-                  d={feature.icon}
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
-            <h3>{feature.title}</h3>
-            <p className="muted">{feature.body}</p>
-          </article>
-        ))}
+      <section className="landing-section" aria-labelledby="how-heading">
+        <p className="eyebrow">How it works</p>
+        <h2 id="how-heading">From hundreds of photos to a finished book in three steps</h2>
+        <ol className="steps">
+          {STEPS.map((step, i) => (
+            <li key={step.title} className="card step">
+              <span className="step-number" aria-hidden="true">
+                {i + 1}
+              </span>
+              <h3>{step.title}</h3>
+              <p className="muted">{step.body}</p>
+            </li>
+          ))}
+        </ol>
       </section>
+
+      <section className="landing-section landing-world" aria-labelledby="world-heading">
+        <div className="landing-world-text">
+          <p className="eyebrow">Your world, mapped</p>
+          <h2 id="world-heading">Every trip you keep becomes a pin on your own map</h2>
+          <p className="muted">
+            Your library opens on a map of everywhere your photos were taken: each trip a coloured
+            route, each country you’ve visited named.
+          </p>
+        </div>
+        <Suspense fallback={<div className="world-map placeholder" />}>
+          <WorldMap trips={SAMPLE_TRIPS} />
+        </Suspense>
+      </section>
+
+      <section className="landing-section" aria-labelledby="features-heading">
+        <p className="eyebrow">What it does</p>
+        <h2 id="features-heading">Built for travellers, not for photo dumps</h2>
+        <div className="features">
+          {FEATURES.map((feature) => (
+            <article key={feature.title} className="card feature">
+              <span className="feature-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d={feature.icon}
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              <h3>{feature.title}</h3>
+              <p className="muted">{feature.body}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="landing-section" aria-labelledby="styles-heading">
+        <p className="eyebrow">Styles</p>
+        <h2 id="styles-heading">Bind every trip its own way</h2>
+        <ul className="style-showcase">
+          {SHOWCASE.map((style) => (
+            <li key={style.id}>
+              <SampleCover themeId={style.id} />
+              <span>{style.label}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="landing-cta">
+        <h2>Your next trip deserves more than a camera roll.</h2>
+        <p>Create a free account and turn your last trip into a book tonight.</p>
+        <Link to="/register" className="button large">
+          Create your free account
+        </Link>
+      </section>
+
+      <footer className="landing-footer muted">
+        <span>Wanderbook</span>
+        <span>A travel book made from your own photos and words.</span>
+      </footer>
     </div>
   );
 }
